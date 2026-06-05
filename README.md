@@ -107,7 +107,7 @@ Connect your own AI API keys to unlock all interactive features. Supports Claude
 ## ✦ 联系方式
 
 - QQ：1282901880
-- 小红书 / Bilibili：Sui
+- 小红书 ：3628686381
 - Email：1282901880@qq.com
 
 ## ✦ 版权声明
