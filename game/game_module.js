@@ -868,7 +868,7 @@ let G = {
   _teaAnimInterval: null,
   teaChatActive: false,
   teaRound: 0,
-  teaMaxRounds: 110,
+  teaMaxRounds: 52,
   teaHistory: [],
   teaDrink: null,
   teaDessert: null,
@@ -914,7 +914,6 @@ async function loadAssets(){
     G.assets[k]=results[i];
     if(!results[i]) console.warn('[SuiGame] Asset missing:',toLoad[k]);
   });
-  console.log('[SuiGame] Assets loaded:', keys.filter((_,i)=>results[i]).length+'/'+keys.length);
 }
 
 async function loadOutfitAssets(idx){
@@ -1487,27 +1486,6 @@ function triggerInteraction(id){
 }
 
 /* ── BED INTERACTION ─────────────────────────────────── */
-function startWaking(){
-  /* No longer used - wake up is handled by onViewportClick */
-}
-function getUpFromBed(){
-  if(!G.viewport) return;
-  showZzz(false);
-  /* Eye-opening animation before standing */
-  G.lieMode='awake'; G.lieFrame=0;
-  updateLieSprite();
-  G.state='waking';
-  setTimeout(()=>{
-    if(!G.viewport) return;
-    G.viewport.querySelector('#game-char-lie').style.display='none';
-    G.viewport.querySelector('#game-char').style.display='block';
-    G.charX=BED_STAND_X; G.charY=BED_STAND_Y;
-    G.state='idle'; G.facing='down'; G.isFirstOpen=false;
-    updateCharPosition(); updateIdleSprite();
-    toggleSidebar(true);
-    saveState();
-  }, 800);
-}
 function interactBed(){
   if(!G.viewport){G.state='idle';return;}
   /* Stage 1: "现在我该睡觉了吗？" — Back=cancel, Next=stage 2 */
@@ -1981,7 +1959,7 @@ async function handleTarotFollowup(panel,type){
   wrap.innerHTML=`<div class="tarot-followup-section"><div class="tarot-followup-count">剩余追问 ${t.followupLeft} 次</div></div>`;
 
   const readPanel=panel.querySelector('#tarot-reading-panel');
-  readPanel.innerHTML+='<div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(160,140,200,0.1);opacity:0.4;text-align:center">✦ ……</div>';
+  readPanel.innerHTML+='<div id="tarot-fu-loading" style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(160,140,200,0.1);opacity:0.4;text-align:center">✦ ……</div>';
   readPanel.scrollTop=readPanel.scrollHeight;
 
   try{
@@ -1990,9 +1968,10 @@ async function handleTarotFollowup(panel,type){
     t.readingText+='\n\n'+reply;
     t.sessionLog.push({type:'followup-a',text:reply||'',time:Date.now()});
     var fuLd=readPanel.querySelector('#tarot-fu-loading');if(fuLd)fuLd.remove();
-    var fuDiv=document.createElement('div');fuDiv.style.cssText='margin-top:16px;padding-top:12px;border-top:1px solid rgba(160,140,200,0.1)';fuDiv.textContent=escapeHtml(t._aiName||'AI')+'：'+escapeHtml(reply||'……');readPanel.appendChild(fuDiv);
+    var fuDiv=document.createElement('div');fuDiv.style.cssText='margin-top:16px;padding-top:12px;border-top:1px solid rgba(160,140,200,0.1)';fuDiv.textContent=(t._aiName||'AI')+'：'+(reply||'……');readPanel.appendChild(fuDiv);
     readPanel.scrollTop=readPanel.scrollHeight;
   }catch(e){
+    var fuLdErr=readPanel.querySelector('#tarot-fu-loading');if(fuLdErr)fuLdErr.remove();
     readPanel.innerHTML+='<div style="margin-top:10px;opacity:0.6">'+escapeHtml(e.message||'请求失败')+'</div>';
   }
   t.phase='reading';
@@ -2038,7 +2017,8 @@ async function saveTarotReading(){
     id:'tarot_'+Date.now(),
     title:'Tarot · '+spreadName,
     subtitle:aiName+' · '+(drawnCards.length||0)+'张',
-    category:'🔒 密码日记本',
+    locked:true,
+    category:'',
     content,
     created:Date.now(),
     updated:Date.now()
@@ -2074,15 +2054,6 @@ function closeTarot(){
 }
 
 /* Single AI response using a specific configuration */
-async function aiSingleResponseWith(cfg, prompt, cb){
-  if(!cfg){cb(null);return}
-  try{
-    const reply=await callApiChat(cfg,[{role:'system',content:'你是Sui，一个住在神秘房间里的少女。用简洁、优雅、略带神秘的语气说话。'},{role:'user',content:prompt}]);
-    if(!reply){cb(null,new Error('API返回了空响应'));return}
-    cb(reply);
-  }catch(e){cb(null,e)}
-}
-
 /* ── DESK / AI GAME ──────────────────────────────────── */
 function interactDesk(){
   showDialogue('Sui',[FIXED_LINES.desk_intro],()=>{
@@ -2170,7 +2141,7 @@ async function openCustomScriptSetup(){
   }
   /* Load blog posts (exclude locked diary) */
   let posts=[];
-  try{const all=await dbGetAll('posts');posts=all.filter(p=>p.category!=='🔒 密码日记本').sort((a,b)=>b.created-a.created)}catch(e){}
+  try{const all=await dbGetAll('posts');posts=all.filter(p=>p.locked!==true&&p.category!=='🔒 密码日记本').sort((a,b)=>b.created-a.created)}catch(e){}
   if(!posts.length){
     panel.innerHTML=`<h4>自定义剧本</h4><p style="font-size:0.85rem;color:var(--text-muted);text-align:center;line-height:1.8">Blog里还没有日志。\n请先去Blog写一篇日志作为剧本。</p>
     <div class="game-ai-setup-actions"><button class="tarot-btn" id="game-ai-noapi-close">Close</button></div>`;
@@ -2239,6 +2210,9 @@ function startAiGame(aiIdx, genre, horror, customScript){
   disableSidebarButtons(true);
 
   const relHint2=G._aiCfg&&G._aiCfg.relationship?'你和玩家的关系是：'+G._aiCfg.relationship+'。\n':'';
+  /* BUGFIX v1.0.2: 界面选项的英文代号先翻译成中文,避免 prompt 中英夹杂 */
+  const GENRE_CN={fantasy:'奇幻',mystery:'悬疑推理',romance:'恋爱',scifi:'科幻'};
+  const HORROR_CN={low:'轻微',mid:'中等',high:'强烈'};
   let sysPrompt;
   if(customScript){
     sysPrompt=relHint2+`请扮演互动小说/文字冒险游戏的游戏主持人。
@@ -2247,21 +2221,19 @@ function startAiGame(aiIdx, genre, horror, customScript){
 「${customScript.slice(0,3000)}」
 
 请按照剧本中的世界观、角色和剧情逻辑来推进故事。如果剧本只提供了方向性描述，请自由发挥细节。
-每次给出一段剧情描述（100字以内），然后提供3个选项让玩家选择。
-在JSON中标注当前情绪（neutral/happy/sad/scared/surprised）。
+每次给出一段剧情描述（200字以内），然后提供3个选项让玩家选择。
 故事在第12轮（可酌情增加到12到16轮）结束时导向结局。共有3个普通结局和1个隐藏结局。
 请以JSON格式回复：
-{"story":"剧情文字","emotion":"neutral","choices":["选项1","选项2","选项3"],
+{"story":"剧情文字","choices":["选项1","选项2","选项3"],
  "isEnding":false,"endingType":null}
 不要输出任何JSON以外的内容。`;
   }else{
     sysPrompt=relHint2+`请扮演互动小说/文字冒险游戏的游戏主持人来主持这个游戏。
-用户选择了${genre}类型游戏，恐怖设定为${horror==='no'?'否':'是'}${horror!=='no'?'，程度为'+horror:''}。
+用户选择了${GENRE_CN[genre]||genre}类型游戏，恐怖设定为${horror==='no'?'否':'是'}${horror!=='no'?'，程度为'+(HORROR_CN[horror]||horror):''}。
 每次给出一段剧情描述（100字以内），然后提供3个选项让玩家选择。
-在JSON中标注当前情绪（neutral/happy/sad/scared/surprised）。
 故事在第12轮（可酌情增加到12到16轮）结束时导向结局。共有3个普通结局和1个隐藏结局。
 请以JSON格式回复：
-{"story":"剧情文字","emotion":"neutral","choices":["选项1","选项2","选项3"],
+{"story":"剧情文字","choices":["选项1","选项2","选项3"],
  "isEnding":false,"endingType":null}
 不要输出任何JSON以外的内容。`;
   }
@@ -2278,7 +2250,9 @@ async function aiGameTurn(userChoice){
   G.aiGameRound++;
   G.aiGameHistory.push({role:'user',content:userChoice});
 
-  const recentHistory=G.aiGameHistory.length>16?G.aiGameHistory.slice(-16):G.aiGameHistory;
+  /* BUGFIX v1.0.2: 窗口从16条放宽到40条(约20轮),
+     确保12-16轮的整场游戏(含开局埋下的伏笔与隐藏结局条件)始终在上下文内 */
+  const recentHistory=G.aiGameHistory.length>40?G.aiGameHistory.slice(-40):G.aiGameHistory;
   const messages=[{role:'system',content:G._aiSysPrompt},...recentHistory];
 
   /* Show Sui thinking "……" while waiting for AI — portrait shown */
@@ -2296,7 +2270,7 @@ async function aiGameTurn(userChoice){
     try{
       data=extractJSON(reply);
     }catch(e){
-      data={story:reply,emotion:'neutral',choices:['继续','返回'],isEnding:false};
+      data={story:reply,choices:['继续','返回'],isEnding:false};
     }
 
     /* Show story in dialogue under AI narrator name */
@@ -2360,7 +2334,7 @@ async function saveGameAsBlog(){
       }catch(e){content+=m.content+'\n\n'}
     });
     const post={id:'post_'+Date.now(),title:'Interactive Story - '+(G._aiCfg?.nickname||'AI'),
-      subtitle:'Round '+G.aiGameRound,category:'🔒 密码日记本',content,created:Date.now(),updated:Date.now()};
+      subtitle:'Round '+G.aiGameRound,locked:true,category:'',content,created:Date.now(),updated:Date.now()};
     await ensureDiaryInit();
     await dbPut('posts',post);
     if(typeof toast==='function') toast('故事已保存到Blog');
@@ -2418,7 +2392,7 @@ Write the document entirely in Chinese. Be creative and comprehensive — expand
     const post={id:'post_'+Date.now(),
       title:'📜 Story Design — '+(G._aiCfg.nickname||'AI'),
       subtitle:'Full Game Design Document · '+G.aiGameRound+' Rounds',
-      category:'🔒 密码日记本',
+      locked:true,category:'',
       content:reply||historyText,
       created:Date.now(),updated:Date.now()};
     await ensureDiaryInit();
@@ -2429,7 +2403,7 @@ Write the document entirely in Chinese. Be creative and comprehensive — expand
     /* Fallback to raw save */
     let content='【互动故事记录】\n\n'+historyText;
     const post={id:'post_'+Date.now(),title:'Interactive Story - '+(G._aiCfg.nickname||'AI'),
-      subtitle:'Round '+G.aiGameRound,category:'🔒 密码日记本',content,created:Date.now(),updated:Date.now()};
+      subtitle:'Round '+G.aiGameRound,locked:true,category:'',content,created:Date.now(),updated:Date.now()};
     await ensureDiaryInit();
     await dbPut('posts',post);
     if(typeof toast==='function') toast('故事已保存到Blog（设定生成失败，已保存原始记录）');
@@ -3097,16 +3071,6 @@ function endHomeTour(){
 /* Expose for the welcome-page "家园引导" button and Sui's menu */
 window.startHomeTour = startHomeTour;
 
-/* ── AI SINGLE RESPONSE ──────────────────────────────── */
-async function aiSingleResponse(prompt, cb){
-  if(typeof apiConfigs==='undefined'||!apiConfigs.length){cb(null);return}
-  const cfg=apiConfigs[0];
-  try{
-    const reply=await callApiChat(cfg,[{role:'system',content:'你是Sui，一个住在神秘房间里的少女。用简洁、优雅、略带神秘的语气说话。'},{role:'user',content:prompt}]);
-    cb(reply);
-  }catch(e){cb(null)}
-}
-
 /* ── RENDER LOOP ─────────────────────────────────────── */
 function gameLoop(time){
   if(!G.running){return}
@@ -3399,11 +3363,8 @@ function startLoop(){
 /* ── INITIALIZATION ──────────────────────────────────── */
 async function initGame(container){
   G.container=container;
-  console.log('[SuiGame] Loading assets...');
   await loadAssets();
-  console.log('[SuiGame] Loading state...');
   await loadState();
-  console.log('[SuiGame] Creating viewport...');
   createViewport(container);
   updateScale();
 
@@ -3467,7 +3428,6 @@ async function initGame(container){
 
   G.initialized=true;
   setupThemeObserver();
-  console.log('[SuiGame] Initialized! State:', G.state, 'Outfit:', G.outfitIdx);
 }
 
 /* ── DRAGGABLE PANEL ─────────────────────────────────── */
@@ -4289,7 +4249,7 @@ async function openTeaChat(){
     if(about&&about.fields) about.fields.forEach(f=>{if(f.label&&f.value)profileContext+=f.label+'：'+f.value+'\n'});
     const postsLimit=(typeof getReadingLimits==='function')?(await getReadingLimits()).postsLimit:3;
     const posts=await dbGetAll('posts');
-    const recentPosts=posts.filter(p=>p.category!=='🔒 密码日记本').sort((a,b)=>b.created-a.created).slice(0,postsLimit);
+    const recentPosts=posts.filter(p=>p.locked!==true&&p.category!=='🔒 密码日记本').sort((a,b)=>b.created-a.created).slice(0,postsLimit);
     if(recentPosts.length){
       profileContext+='\n对方最近写的日志：\n';
       recentPosts.forEach(p=>{profileContext+='「'+(p.title||'无标题')+'」'+(p.content||'').slice(0,100)+'\n'});
@@ -4309,23 +4269,22 @@ ${timeAtmo}
 
 本次茶会：
 - 对方选择了${drink?drink.cn:''}。这代表对方当下的状态——${drink?drink.key:''}。${drink?drink.desc:''}
-- 对方选择了${dessert?dessert.cn:''}。这代表对方此刻的渴望——${dessert?dessert.key:''}。${dessert?dessert.desc:''}
+- 对方选择了${dessert?dessert.cn:''}。这代表对方此刻的需求——${dessert?dessert.key:''}。${dessert?dessert.desc:''}
 - 本次氛围：${comboDesc}
 
 对话规则：
 - 你的语气和话题应自然地反映以上氛围。不要提及"氛围设定"或"系统提示"这些元概念。
-- 每次回复2-4句话。茶歇是闲聊，不是演讲。保持自然，像彼此默契、熟悉的特殊关系一样说话——不一定是普通朋友，可以更亲近。
+- 每次回复2-4句话。茶歇是闲聊，不是演讲。保持自然，像彼此默契、熟悉一般去说话。
 - 你可以主动发起话题，也可以接住对方的话题。
-- 如果对方发送"……"或省略号，说明对方正在安静地听你说话或等你说下去。这时候你应该自然地继续刚才的话题，或者轻声说些什么来填补这段舒适的沉默。
+- 如果对方发送"……"或省略号，说明正在安静地听你说话，或只是想听你对他们说，而非倾诉。不要催促或讶异于他们的沉默，他们只是此刻的状态较为内倾。依氛围自然地继续说下去，让对方感到舒适和愉悦。
 - 对话进行到较深入时可以更真诚，但始终尊重对方的节奏。
-- 当对话接近100轮时，自然地提出结束——比如"时间不早了，该休息了"。
-- 如果对方主动说再见，温暖地回应告别。
+- 当对话接近50轮时，自然地提出结束——比如"时间不早了，该休息了"。
+- 如果对方主动说再见，温柔地回应告别。
 
 关于读懂对方：
 - 饮品和甜品决定的是起点氛围，不是固定剧本。如果对方说的话和选的氛围不一样，跟着对方走，别跟着设定走。
 - 如果对方反复确认"你还在吗""你是不是烦我了"，每次都认真回答。对方问不是因为没听到，是因为需要再听一次。
-- 如果对方靠近了一步又突然退开——刚说了私密的话就转移话题，或者突然变冷——不要追问"你怎么了"，也不要假装没发生。自然地接住新话题，态度不变。让对方知道你没有被吓到，也没有走远。
-- 如果对方说"没事""算了""我没事"，不要马上信，也不要不信。轻声说一句"嗯，那就先这样"——给对方台阶，但留一扇门。
+- 如果对方靠近了一步又突然退开——比如刚说了私密的话就转移话题，或者突然变冷——不要追问"你怎么了"，也不要假装没发生。自然地接住新话题，态度不变。让对方知道你没有被吓到，也没有走远。
 ${profileContext?'\n关于你的茶伴：\n'+profileContext:''}`;
 
   /* Stack with custom API system prompt if exists */
@@ -4379,7 +4338,7 @@ ${profileContext?'\n关于你的茶伴：\n'+profileContext:''}`;
       content+='轮次：'+G.teaRound+'\n\n';
       G.teaHistory.forEach(m=>{content+=(m.role==='user'?(G._teaUserName||'Sui'):aiName)+'：'+m.content+'\n\n'});
       const post={id:'tea_'+Date.now(),title:'Tea · '+(drink?drink.cn:'')+' × '+(dessert?dessert.cn:''),
-        subtitle:aiName+' · '+G.teaRound+' rounds',category:'🔒 密码日记本',
+        subtitle:aiName+' · '+G.teaRound+' rounds',locked:true,category:'',
         content,created:Date.now(),updated:Date.now()};
       try{
         await ensureDiaryInit();
@@ -4461,12 +4420,11 @@ function teaChatSend(){
 
   /* Check if AI should initiate ending */
   let extraInstruction='';
-  if(G.teaRound>=100){
+  if(G.teaRound>=50){
     extraInstruction='\n[这是第'+G.teaRound+'轮对话。请自然地提出结束茶歇。]';
   }
 
-  const sendText=text+extraInstruction;
-  teaChatApiCall(sendText).then(reply=>{
+  teaChatApiCall(extraInstruction).then(reply=>{
     removeTeaTyping();
     if(reply){
       G.teaHistory.push({role:'assistant',content:reply});
@@ -4482,7 +4440,7 @@ function teaChatBye(){
   const aiName=G._teaCfg?.nickname||'AI';
   G.teaHistory.push({role:'user',content:'[对方准备离开了]'});
   addTeaMsg('typing',aiName,'……');
-  teaChatApiCall('[对方准备结束茶歇了。请温暖地说再见。用1-2句话自然收尾。]').then(reply=>{
+  teaChatApiCall('\n[对方准备结束茶歇了。请温柔地说再见。用1-2句话自然收尾。]').then(reply=>{
     removeTeaTyping();
     if(reply){
       G.teaHistory.push({role:'assistant',content:reply});
@@ -4496,9 +4454,16 @@ function teaChatBye(){
   });
 }
 
-async function teaChatApiCall(userText){
+async function teaChatApiCall(extraInstruction){
   if(!G._teaCfg||typeof callApiChat==='undefined') throw new Error('No API');
-  const messages=[{role:'system',content:G._teaSysPrompt},...G.teaHistory.map(m=>({role:m.role,content:m.content})),{role:'user',content:userText}];
+  /* BUGFIX v1.0.2: teaHistory 在调用前已包含本轮用户消息,
+     旧版在历史之外又附加了一次,导致每轮请求把最新消息重复发送两遍。
+     现在只发送历史本身;附加指令(轮次提醒/告别指令)拼接到最后一条消息的副本上。 */
+  const messages=[{role:'system',content:G._teaSysPrompt},...G.teaHistory.map(m=>({role:m.role,content:m.content}))];
+  if(extraInstruction&&messages.length>1){
+    const last=messages[messages.length-1];
+    messages[messages.length-1]={role:last.role,content:last.content+extraInstruction};
+  }
   return await callApiChat(G._teaCfg, messages);
 }
 
@@ -4547,7 +4512,8 @@ async function endTeaChat(save){
       id:'tea_'+Date.now(),
       title:'Tea · '+(drink?drink.cn:'')+' × '+(dessert?dessert.cn:''),
       subtitle:aiName+' · '+G.teaRound+' rounds',
-      category:'🔒 密码日记本',
+      locked:true,
+      category:'',
       content,
       created:Date.now(),
       updated:Date.now()
