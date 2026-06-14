@@ -891,6 +891,8 @@ let G = {
   _teaSysPrompt: '',
   _teaPortraitImg: null,   // custom DIY portrait for the current tea AI (or null)
   _aiPortraitImg: null,    // custom DIY portrait for the current Story AI (or null)
+  _deskSprTimer: null,     // desk sprite 2-frame animation timer
+  _deskTypwTimer: null,    // desk sprite typewriter animation timer
   /* ── Story 常驻视窗（storyWin）内部状态 ── */
   swEl: null,              // 视窗根DOM节点（null = 未开启）
   swMood: 'calm',          // 当前情绪：calm / joy / tense / sad / shock
@@ -999,6 +1001,16 @@ function createViewport(container){
     </div>
     <div class="game-char-lie" id="game-char-lie" style="display:none">
       <img id="game-char-lie-img">
+    </div>
+    <div class="game-desk-spr" id="game-desk-spr">
+      <div id="game-desk-sheet"></div>
+    </div>
+    <div class="game-desk-zzz" id="game-desk-zzz">
+      <img class="sleep-bubble-img" src="game/sleep_bubble.png" alt="">
+      <span class="sleep-star s0">✦</span>
+      <span class="sleep-star s1">✦</span>
+      <span class="sleep-star s2">✦</span>
+      <span class="sleep-star s3">✦</span>
     </div>
     <div id="game-indicators"></div>
     <div class="game-zzz" id="game-zzz" style="display:none"><span>Z</span><span>z</span><span>z</span></div>
@@ -2090,7 +2102,7 @@ function interactDesk(){
       }else{
         showDialogue('Sui',[
           'Story是一个AI驱动的互动文字冒险游戏。\n你选择一个AI来当游戏主持人，TA会为你实时编写分支剧情。',
-          '开始前你需要做三个选择：\n· 选一个AI当主持人\n· 选故事类型（奇幻/悬疑/浪漫/科幻）\n· 选恐怖程度（无/低/中/高）',
+          '开始前你需要做三个选择：\n· 选一个AI当主持人\n· 选故事类型（奇幻/神秘学/推理悬疑/恋爱/科幻）\n· 选恐怖程度（无/低/中/高）',
           '游戏开始后，AI每轮会给你一段剧情，然后提供三个选项让你选择。\n你的每一个选择都会影响故事的走向。',
           '故事大约在12到16轮后结束。\n共有3个普通结局和1个隐藏结局——能不能触发隐藏结局，取决于你的选择。',
           '还有一种玩法：「自定义剧本」。\n你在Blog里写一篇日志当剧本（世界观、角色、剧情走向都行），AI会按你写的内容来主持游戏。',
@@ -2119,7 +2131,7 @@ function openAiSetup(){
   const apiOpts = apiConfigs.map((a,i)=>`<option value="${i}">${a.nickname||a.model||'AI'}</option>`).join('');
   panel.innerHTML=`<h4>Interactive Story</h4>
     <label>AI</label><select id="game-ai-select">${apiOpts}</select>
-    <label>Genre</label><select id="game-genre"><option value="fantasy">Fantasy</option><option value="mystery">Mystery</option><option value="romance">Romance</option><option value="scifi">Sci-Fi</option></select>
+    <label>Genre</label><select id="game-genre"><option value="fantasy">Fantasy</option><option value="mystery">Mystic</option><option value="detective">Detective</option><option value="romance">Romance</option><option value="scifi">Sci-Fi</option></select>
     <label>Horror Elements</label><select id="game-horror"><option value="no">No</option><option value="low">Low</option><option value="mid">Medium</option><option value="high">High</option></select>
     <div class="game-ai-setup-actions">
       <button class="tarot-btn" id="game-ai-start">Start</button>
@@ -2135,7 +2147,8 @@ function openAiSetup(){
     /* Genre-specific Sui response before starting */
     const genreLines={
       fantasy:'有时我会感到幻想与现实之间的距离……并不远。',
-      mystery:'等等，现在是侦探时间吗？',
+      mystery:'神秘，会屈从于更高的神秘……这是谁的台词？',
+      detective:'嗯？现在是侦探时间吗？',
       romance:'浪漫主义就是爱情的本质吗？',
       scifi:'我要穿着现在的衣服去玩吗？会不会不合氛围？'
     };
@@ -2234,12 +2247,14 @@ function startAiGame(aiIdx, genre, horror, customScript){
   loadCustomPortrait(G._aiCfg).then(img=>{ G._aiPortraitImg=img; });
   /* Lock movement — gray out sidebar buttons */
   disableSidebarButtons(true);
+  /* Hide Sui character → show desk reading sprite with typewriter bubble */
+  showDeskSprite();
   openStoryWindow();/* Story常驻视窗：开窗淡入（Replay重开新局时复用同一视窗） */
 
   const personalize=!!(G._aiCfg&&G._aiCfg.storyPersonalize);
   const relHint2=personalize&&G._aiCfg.relationship?'你和玩家的关系是：'+G._aiCfg.relationship+'。\n':'';
   /* BUGFIX v1.0.2: 界面选项的英文代号先翻译成中文,避免 prompt 中英夹杂 */
-  const GENRE_CN={fantasy:'奇幻',mystery:'悬疑推理',romance:'恋爱',scifi:'科幻'};
+  const GENRE_CN={fantasy:'奇幻',mystery:'神秘学',detective:'推理悬疑',romance:'恋爱',scifi:'科幻'};
   const HORROR_CN={low:'轻微',mid:'中等',high:'强烈'};
   let sysPrompt;
   if(customScript){
@@ -2257,9 +2272,11 @@ function startAiGame(aiIdx, genre, horror, customScript){
 其中mood字段表示Sui听到这段剧情时的情绪反应，只能取以下5个值之一：calm（平静日常）、joy（开心愉悦）、tense（紧张警惕）、sad（悲伤难过）、shock（震惊意外）。请根据剧情走向与玩家上一个选项造成的后果来选择。
 不要输出任何JSON以外的内容。`;
   }else{
+    const genreHint=genre==='detective'?'玩家将扮演侦探角色来破案。请设计一个有悬念的案件，提供线索、嫌疑人和推理环节，让玩家通过选择来收集证据、审讯嫌疑人并最终揭开真相。\n'
+      :genre==='mystery'?'故事围绕神秘学与宗教展开。创作题材可从以下方向选取（不限于此）：塔罗象征、炼金术、卡巴拉、赫尔墨斯主义、蔷薇十字会、诺斯替主义、基督教密契传统、佛教、密宗、苏菲派、神道教等。恐怖程度较低时以经典神秘传统为主；恐怖程度较高时可加入虚构的异端教派、架空的禁忌仪式、洛夫克拉夫特式宇宙恐怖、以及你自由创作的邪典体系——但所有黑暗或邪典内容必须是虚构的，禁止引用现实中的邪教事件或真实犯罪。请用通俗易懂的方式讲故事，玩家不需要专业知识也能玩得开心。\n':'';
     sysPrompt=relHint2+`请扮演互动小说/文字冒险游戏的游戏主持人来主持这个游戏。
 用户选择了${GENRE_CN[genre]||genre}类型游戏，恐怖设定为${horror==='no'?'否':'是'}${horror!=='no'?'，程度为'+(HORROR_CN[horror]||horror):''}。
-每次给出一段剧情描述（180字以内），然后提供3个选项让玩家选择。
+${genreHint}每次给出一段剧情描述（180字以内），然后提供3个选项让玩家选择。
 故事在第12轮（可酌情增加到12到16轮）结束时导向结局。共有3个普通结局和1个隐藏结局。
 请以JSON格式回复：
 {"story":"剧情文字","choices":["选项1","选项2","选项3"],
@@ -2381,6 +2398,7 @@ function aiGameError(msg){
 
 function endAiGame(){
   closeStoryWindow();/* Story视窗：淡出并销毁 */
+  hideDeskSprite();/* 书桌精灵：收起，恢复角色 */
   G.aiGameActive=false;
   G._aiSession=(G._aiSession||0)+1;
   G._aiSending=false;
@@ -2665,7 +2683,12 @@ function showDialogue(speaker, textArray, onComplete){
     portraitImg.src=G._aiPortraitImg.src;
     portraitEl.classList.add('show');
   }else{
+    /* BUG-FIX: clear src & skip transition to prevent stale portrait flash */
+    portraitEl.style.transition='none';
     portraitEl.classList.remove('show');
+    portraitImg.src='';
+    void portraitEl.offsetHeight;          /* force reflow */
+    portraitEl.style.transition='';        /* restore CSS transition */
   }
 
   /* Story视窗：Sui弹“……”=AI思考中 → 头顶气泡打字机循环播放；其他任何对话出现即停 */
@@ -4744,10 +4767,14 @@ async function endTeaChat(save){
 const SW_W=608, SW_H=375;            /* 视窗背景素材原始尺寸（1:1摆进1672×941画布，不再缩小） */
 const SW_TOP=86;                     /* 视窗顶边y（画布坐标）；水平居中——位置按示意图实测 */
 const SW_SPR_X=302, SW_SPR_Y=263;    /* 精灵锚点：中心x=302、底边y=263（盖住椅子、手搭桌沿，按示意图实测） */
-const SW_SPR_FRAMES=6;               /* 精灵图横排6帧均分 */
-let SW_SPR_W=904/6, SW_SPR_H=98;     /* 单帧尺寸（素材载入后按 naturalWidth/6 自动校正） */
+const SW_SPR_FRAMES=5;               /* 精灵图5列（按轮次顺序播放） */
+let SW_SPR_W=750/5, SW_SPR_H=98;     /* 单帧尺寸（素材载入后自动校正：宽÷5列，高÷2行） */
 const SW_MOODS=['calm','joy','tense','sad','shock'];
-const SW_MOOD_MS={calm:420,joy:300,tense:380,sad:600,shock:420}; /* 各情绪的帧间隔ms：整体放慢一档，joy仍最快、sad最慢 */
+const SW_MOOD_MS={calm:800,joy:650,tense:700,sad:900,shock:700}; /* 帧间隔ms：整体放慢，呼吸节奏 */
+const SW_MOOD_COL={calm:2,joy:0,tense:1,sad:3,shock:4}; /* 情绪→精灵列：calm/存档=第3组 */
+/* ── Desk sprite 书桌精灵（Story模式时Sui趴在书桌上睡觉） ── */
+const DESK_SPR_CX=1282, DESK_SPR_BY=438;
+const DESK_SPR_FW=150, DESK_SPR_FH=100; /* story_desk.png 150×200, 上下2帧各100px */
 
 /* ── 像素SVG图标（crispEdges硬边方块拼接） ── */
 const SW_SVG=(function(){
@@ -4800,7 +4827,7 @@ const STORY_CSS=`
 .sw-bg{position:absolute;left:0;top:0;width:100%;height:100%;transition:opacity .6s ease}
 /* Sui 精灵（wrapper 吃情绪位移动画，sheet 吃帧动画） */
 .sw-sprite{position:absolute;left:${SW_SPR_X}px;bottom:${SW_H-SW_SPR_Y}px;margin-left:${-SW_SPR_W/2}px;z-index:2}
-#sw-sheet{width:${SW_SPR_W}px;height:${SW_SPR_H}px;background:url('game/story_sprites.png') 0 0/600% 100% no-repeat;image-rendering:pixelated}
+#sw-sheet{width:${SW_SPR_W}px;height:${SW_SPR_H}px;background:url('game/story_sprites.png') 0 0/500% 200% no-repeat;image-rendering:pixelated}
 /* 头顶表情气泡 */
 .sw-emote{position:absolute;left:348px;top:152px;width:64px;height:64px;transform:translate(-50%,-100%);z-index:4;opacity:0;pointer-events:none}
 .sw-emote svg{width:100%;height:100%;display:block}
@@ -4829,13 +4856,77 @@ const STORY_CSS=`
 /* 5 种情绪位移动画（作用于精灵 wrapper） */
 .sw-mood-joy{animation:swJoyHop .55s ease 2}
 @keyframes swJoyHop{0%,100%{transform:translateY(0)}40%{transform:translateY(-13px)}}
-.sw-mood-tense{animation:swTense .9s steps(2) infinite}
-@keyframes swTense{0%,100%{transform:translateX(-2px)}50%{transform:translateX(2px)}}
+.sw-mood-tense{/* 已移除左右抖动位移 */}
 .sw-mood-sad{animation:swSad 3.2s ease-in-out infinite}
 @keyframes swSad{0%,100%{transform:translateY(3px)}50%{transform:translateY(5px)}}
 .sw-mood-shock{animation:swShock .55s ease 1}
 @keyframes swShock{0%,100%{transform:translateY(0)}25%{transform:translateY(-16px) scaleY(1.04)}}
+/* ── DESK SPRITE (Story mode · Room内书桌精灵) ──────── */
+.game-desk-spr{position:absolute;left:${DESK_SPR_CX-DESK_SPR_FW/2}px;top:${DESK_SPR_BY-DESK_SPR_FH}px;
+  width:${DESK_SPR_FW}px;height:${DESK_SPR_FH}px;z-index:8;pointer-events:none;
+  image-rendering:pixelated;overflow:hidden;opacity:0;transition:opacity .5s ease}
+.game-desk-spr.show{opacity:1}
+#game-desk-sheet{width:${DESK_SPR_FW}px;height:${DESK_SPR_FH}px;
+  background:url('game/story_desk.png') 0 0/100% 200% no-repeat;image-rendering:pixelated}
+/* ── 睡梦气泡（书桌精灵头顶·图标+星星） ──── */
+.game-desk-zzz{position:absolute;left:${DESK_SPR_CX-12}px;top:${DESK_SPR_BY-DESK_SPR_FH-30}px;
+  z-index:9;pointer-events:none;opacity:0;transition:opacity .5s ease;
+  width:74px;height:64px}
+.game-desk-zzz.show{opacity:1}
+.sleep-bubble-img{width:100%;height:100%;image-rendering:pixelated;display:block}
+.sleep-star{position:absolute;font-size:8px;color:#f5d97a;opacity:0;
+  text-shadow:0 0 3px rgba(245,217,122,.6);pointer-events:none}
+.game-desk-zzz.show .sleep-star{animation:sleepSparkle 2.8s ease-in-out infinite}
+.sleep-star.s0{top:-4px;right:-2px;font-size:7px;animation-delay:0s}
+.sleep-star.s1{top:6px;right:-8px;font-size:5px;animation-delay:.7s}
+.sleep-star.s2{top:-6px;left:8px;font-size:6px;animation-delay:1.4s}
+.sleep-star.s3{top:14px;right:-5px;font-size:4px;animation-delay:2.1s}
+@keyframes sleepSparkle{0%,100%{opacity:0;transform:scale(.5) translateY(0)}
+  20%{opacity:.7;transform:scale(1) translateY(-2px)}
+  50%{opacity:.9;transform:scale(1.1) translateY(-4px)}
+  80%{opacity:.4;transform:scale(.8) translateY(-6px)}}
 `;
+
+/* ── Desk sprite: Story 模式时 Sui 坐在书桌前，头顶飘打字机气泡 ── */
+function showDeskSprite(){
+  if(!G.viewport)return;
+  const ch=G.viewport.querySelector('#game-char');
+  if(ch) ch.style.display='none';
+  const ds=G.viewport.querySelector('#game-desk-spr');
+  if(ds) ds.classList.add('show');
+  startDeskSprFrames();
+  startDeskTypw();
+}
+function hideDeskSprite(){
+  if(!G.viewport)return;
+  stopDeskSprFrames();
+  stopDeskTypw();
+  const ds=G.viewport.querySelector('#game-desk-spr');
+  if(ds) ds.classList.remove('show');
+  const ch=G.viewport.querySelector('#game-char');
+  if(ch) ch.style.display='block';
+}
+function startDeskSprFrames(){
+  if(G._deskSprTimer)clearInterval(G._deskSprTimer);
+  const sheet=G.viewport&&G.viewport.querySelector('#game-desk-sheet');
+  if(!sheet)return;
+  let row=0;
+  G._deskSprTimer=setInterval(()=>{
+    row=row===0?1:0;
+    sheet.style.backgroundPosition='0 '+(row*100)+'%';
+  },650);
+}
+function stopDeskSprFrames(){
+  if(G._deskSprTimer){clearInterval(G._deskSprTimer);G._deskSprTimer=null;}
+}
+function startDeskTypw(){
+  const el=G.viewport&&G.viewport.querySelector('#game-desk-zzz');
+  if(el) el.classList.add('show');
+}
+function stopDeskTypw(){
+  const el=G.viewport&&G.viewport.querySelector('#game-desk-zzz');
+  if(el) el.classList.remove('show');
+}
 
 /* ── 开窗（startAiGame 调用；Replay 重开新局时复用同一视窗，只重置状态） ── */
 function openStoryWindow(){
@@ -4881,7 +4972,7 @@ function openStoryWindow(){
   const probe=new Image();
   probe.onload=()=>{
     if(!G.swEl)return;
-    const fw=probe.naturalWidth/SW_SPR_FRAMES, fh=probe.naturalHeight;
+    const fw=probe.naturalWidth/SW_SPR_FRAMES, fh=probe.naturalHeight/2; /* 2行取半 */
     SW_SPR_W=fw; SW_SPR_H=fh;
     const sheet=G.swEl.querySelector('#sw-sheet');
     const spr=G.swEl.querySelector('#sw-sprite');
@@ -4928,9 +5019,12 @@ function storyWinStartFrames(){
   const sheet=G.swEl.querySelector('#sw-sheet');
   if(!sheet)return;
   const ms=SW_MOOD_MS[G.swMood]||SW_MOOD_MS.calm;
+  const col=SW_MOOD_COL[G.swMood]!=null?SW_MOOD_COL[G.swMood]:SW_MOOD_COL.calm;
+  G.swFrame=0;
+  sheet.style.backgroundPosition=(col*25)+'% 0%';
   G.swFrameTimer=setInterval(()=>{
-    G.swFrame=(G.swFrame+1)%SW_SPR_FRAMES;
-    sheet.style.backgroundPosition=(G.swFrame*20)+'% 0'; /* 6帧→每帧步进20%，与素材实际像素宽无关 */
+    G.swFrame=G.swFrame===0?1:0; /* 上下2帧切换 */
+    sheet.style.backgroundPosition=(col*25)+'% '+(G.swFrame*100)+'%';
   },ms);
 }
 
@@ -4939,10 +5033,13 @@ function storyWinMood(m){
   if(!G.swEl)return;
   if(SW_MOODS.indexOf(m)<0)m='calm'; /* 非法/缺失值兜底 */
   G.swMood=m;
+  const col=SW_MOOD_COL[m]!=null?SW_MOOD_COL[m]:SW_MOOD_COL.calm;
+  const sheet=G.swEl.querySelector('#sw-sheet');
+  if(sheet) sheet.style.backgroundPosition=(col*25)+'% 0%';
   const spr=G.swEl.querySelector('#sw-sprite');
   if(spr){
     spr.className='sw-sprite';
-    void spr.offsetWidth; /* 强制重排：同情绪连续触发也能重播动画 */
+    void spr.offsetWidth;
     spr.classList.add('sw-mood-'+m);
   }
   storyWinStartFrames();
