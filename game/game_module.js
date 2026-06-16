@@ -181,6 +181,10 @@ const TOUR_STEPS = [
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600&display=swap');
 
+/* ── ROOM TEXT: 不可选中/复制（输入框除外） ──────────── */
+#game-panel,#page-game{-webkit-user-select:none;-moz-user-select:none;user-select:none;-webkit-touch-callout:none}
+#game-panel input,#game-panel textarea,#page-game input,#page-game textarea{-webkit-user-select:text;-moz-user-select:text;user-select:text}
+
 /* ── GAME MINI ICON ──────────────────────────────────── */
 #game-mini{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:90;
   padding:48px 11px;border-radius:8px 0 0 8px;background:rgba(20,30,50,0.35);border:1px solid var(--glass-border);border-right:none;
@@ -561,7 +565,7 @@ body:not(.theme-infernal) .game-wardrobe-close:hover{
 .tarot-right{width:380px;flex-shrink:0;display:flex;flex-direction:column;border-left:1px solid rgba(160,140,200,0.1);padding-left:18px;gap:8px}
 
 /* Card fan area — opened folding fan */
-.tarot-fan{position:relative;width:100%;flex:0 0 auto;height:240px;min-height:240px}
+.tarot-fan{position:relative;width:100%;flex:0 0 auto;height:240px;min-height:240px;touch-action:manipulation}
 .tarot-fan-card{position:absolute;width:115px;height:178px;border-radius:5px;cursor:pointer;
   transform-origin:center bottom;transition:margin-top 0.2s,opacity 0.4s,box-shadow 0.2s;
   background:linear-gradient(135deg,#1a1228 0%,#2a1a3a 50%,#1a1228 100%);
@@ -1004,9 +1008,11 @@ function createViewport(container){
     </div>
     <div class="game-desk-spr" id="game-desk-spr">
       <div id="game-desk-sheet"></div>
+      <div id="game-desk-sheet-inf"></div>
     </div>
     <div class="game-desk-zzz" id="game-desk-zzz">
-      <img class="sleep-bubble-img" src="game/sleep_bubble.png" alt="">
+      <img class="sleep-bubble-img sbi-internal" src="game/sleep_bubble_internal.png" alt="">
+      <img class="sleep-bubble-img sbi-infernal" src="game/sleep_bubble_infernal.png" alt="">
       <span class="sleep-star s0">✦</span>
       <span class="sleep-star s1">✦</span>
       <span class="sleep-star s2">✦</span>
@@ -1789,13 +1795,23 @@ function generateTarotFan(panel){
     html+=`<div class="tarot-fan-card" data-idx="${i}" style="left:calc(50% + ${x.toFixed(1)}px - ${(cardW/2).toFixed(1)}px);bottom:${yBottom.toFixed(1)}px;transform:rotate(${ang.toFixed(1)}deg);z-index:${i}">✦</div>`;
   }
   fan.innerHTML=html;
-  fan.querySelectorAll('.tarot-fan-card').forEach(el=>{
-    el.addEventListener('click',()=>{
-      if(G._tarot.phase!=='pick')return;
-      if(el.classList.contains('picked'))return;
-      pickTarotCard(panel,parseInt(el.dataset.idx),el);
+  /* 容器级"就近取牌"：点扇形区任意位置取最接近的未抽出牌，扩大可点区域 */
+  if(!fan._pickBound){
+    fan._pickBound=true;
+    fan.addEventListener('click',(e)=>{
+      if(!G._tarot||G._tarot.phase!=='pick')return;
+      const cards=fan.querySelectorAll('.tarot-fan-card:not(.picked)');
+      if(!cards.length)return;
+      let best=null,bestD=Infinity;
+      for(const c of cards){
+        const r=c.getBoundingClientRect();
+        const dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
+        const d=dx*dx+dy*dy;
+        if(d<bestD){bestD=d;best=c;}
+      }
+      if(best)pickTarotCard(panel,parseInt(best.dataset.idx),best);
     });
-  });
+  }
 }
 
 function pickTarotCard(panel,deckIdx,fanEl){
@@ -2180,7 +2196,7 @@ async function openCustomScriptSetup(){
   let posts=[];
   try{const all=await dbGetAll('posts');posts=all.filter(p=>p.locked!==true&&p.category!=='🔒 密码日记本').sort((a,b)=>b.created-a.created)}catch(e){}
   if(!posts.length){
-    panel.innerHTML=`<h4>自定义剧本</h4><p style="font-size:0.85rem;color:var(--text-muted);text-align:center;line-height:1.8">Blog里还没有日志。\n请先去Blog写一篇日志作为剧本。</p>
+    panel.innerHTML=`<h4 style="font-family:'Noto Sans SC',sans-serif;font-style:normal">自定义剧本</h4><p style="font-size:0.85rem;color:var(--text-muted);text-align:center;line-height:1.8">Blog里还没有日志。\n请先去Blog写一篇日志作为剧本。</p>
     <div class="game-ai-setup-actions"><button class="tarot-btn" id="game-ai-noapi-close">Close</button></div>`;
     panel.classList.add('show');
     panel.querySelector('#game-ai-noapi-close').addEventListener('click',()=>{panel.classList.remove('show');G.state='idle'});
@@ -2189,8 +2205,10 @@ async function openCustomScriptSetup(){
   const esc=(typeof escapeHtml==='function')?escapeHtml:(s=>String(s));
   const apiOpts=apiConfigs.map((a,i)=>`<option value="${i}">${esc(a.nickname||a.model||'AI')}</option>`).join('');
   const postList=posts.map(p=>`<div class="game-script-item" data-pid="${p.id}" style="padding:10px 14px;margin-bottom:6px;border:1px solid rgba(175,195,228,0.15);border-radius:8px;cursor:pointer;transition:all 0.3s"><div style="font-size:0.88rem;color:var(--light);margin-bottom:3px">${esc(p.title||'无标题')}</div><div style="font-size:0.72rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc((p.content||'').slice(0,60))}</div></div>`).join('');
-  panel.innerHTML=`<h4>自定义剧本</h4>
-    <label>AI 主持人</label><select id="game-cs-ai">${apiOpts}</select>
+  panel.innerHTML=`<h4 style="font-family:'Noto Sans SC',sans-serif;font-style:normal">自定义剧本</h4>
+    <label>AI</label><select id="game-cs-ai">${apiOpts}</select>
+    <label style="margin-top:12px">Genre</label><select id="game-cs-genre"><option value="fantasy">Fantasy</option><option value="mystery">Mystic</option><option value="detective">Detective</option><option value="romance">Romance</option><option value="scifi">Sci-Fi</option></select>
+    <label style="margin-top:12px">Horror Elements</label><select id="game-cs-horror"><option value="no">No</option><option value="low">Low</option><option value="mid">Medium</option><option value="high">High</option></select>
     <label style="margin-top:12px">选择一篇日志作为剧本</label>
     <div id="game-cs-posts" style="max-height:200px;overflow-y:auto;margin-bottom:12px">${postList}</div>
     <div class="game-ai-setup-actions">
@@ -2216,12 +2234,14 @@ async function openCustomScriptSetup(){
   panel.querySelector('#game-cs-start').addEventListener('click',async()=>{
     if(!selectedPostId)return;
     const aiIdx=parseInt(panel.querySelector('#game-cs-ai').value);
+    const genre=panel.querySelector('#game-cs-genre').value;
+    const horror=panel.querySelector('#game-cs-horror').value;
     const post=posts.find(p=>p.id===selectedPostId);
     if(!post){if(typeof toast==='function')toast('日志不存在');return}
     panel.classList.remove('show');
     showDialogue('Sui',['收到。让我先看一下你的剧本……'],()=>{
       closeDialogue();
-      startAiGame(aiIdx,'custom','no',post.content);
+      startAiGame(aiIdx,genre,horror,post.content);
     });
   });
   panel.querySelector('#game-cs-cancel').addEventListener('click',()=>{
@@ -2263,6 +2283,7 @@ function startAiGame(aiIdx, genre, horror, customScript){
 
 「${customScript.slice(0,3000)}」
 
+玩家选择的游戏类型为${GENRE_CN[genre]||genre}，选择的恐怖度为${horror==='no'?'无':(HORROR_CN[horror]||horror)}。
 请按照剧本中的世界观、角色和剧情逻辑来推进故事。如果剧本只提供了方向性描述，请自由发挥细节。
 每次给出一段剧情描述（200字以内），然后提供3个选项让玩家选择。
 故事在第12轮（可酌情增加到12到16轮）结束时导向结局。共有3个普通结局和1个隐藏结局。
@@ -4472,7 +4493,7 @@ async function openTeaChat(){
   const timeAtmo=isNight?'现在是深夜。房间里只有烛光和月光，窗外是漆黑的湖面和远山的轮廓。氛围安静、私密。':'现在是白天。阳光从窗外照进来，能看到湖面和远处的森林。氛围明亮、温暖。';
 
   /* Build tea system prompt */
-  const relHint=G._teaCfg&&G._teaCfg.relationship?'你和对方的关系是：'+G._teaCfg.relationship+'。\n':'';  const teaPrompt=relHint+`你正在一座临湖的、被山与森林环绕的与世隔绝的度假别墅里，一个安静的房间中，和${userName}喝下午茶。这是一个私密的空间。
+  const relHint=G._teaCfg&&G._teaCfg.relationship?'你和对方的关系是：'+G._teaCfg.relationship+'。\n':'';  const teaPrompt=relHint+`你正在一座临湖的、被山与森林环绕的与世隔绝的度假别墅里，一个安静的房间中，和${userName}喝下午茶。这是一场私密的约会。
 ${timeAtmo}
 
 本次茶会：
@@ -4774,7 +4795,7 @@ const SW_MOOD_MS={calm:800,joy:650,tense:700,sad:900,shock:700}; /* 帧间隔ms�
 const SW_MOOD_COL={calm:2,joy:0,tense:1,sad:3,shock:4}; /* 情绪→精灵列：calm/存档=第3组 */
 /* ── Desk sprite 书桌精灵（Story模式时Sui趴在书桌上睡觉） ── */
 const DESK_SPR_CX=1282, DESK_SPR_BY=438;
-const DESK_SPR_FW=150, DESK_SPR_FH=100; /* story_desk.png 150×200, 上下2帧各100px */
+const DESK_SPR_FW=150, DESK_SPR_FH=100; /* 书桌图 150×200，上下2帧各100px */
 
 /* ── 像素SVG图标（crispEdges硬边方块拼接） ── */
 const SW_SVG=(function(){
@@ -4866,14 +4887,21 @@ const STORY_CSS=`
   width:${DESK_SPR_FW}px;height:${DESK_SPR_FH}px;z-index:8;pointer-events:none;
   image-rendering:pixelated;overflow:hidden;opacity:0;transition:opacity .5s ease}
 .game-desk-spr.show{opacity:1}
-#game-desk-sheet{width:${DESK_SPR_FW}px;height:${DESK_SPR_FH}px;
-  background:url('game/story_desk.png') 0 0/100% 200% no-repeat;image-rendering:pixelated}
+#game-desk-sheet,#game-desk-sheet-inf{position:absolute;left:0;top:0;width:${DESK_SPR_FW}px;height:${DESK_SPR_FH}px;
+  background-repeat:no-repeat;background-position:0 0;background-size:100% 200%;image-rendering:pixelated;transition:opacity .6s ease}
+#game-desk-sheet{background-image:url('game/story_desk_internal.png')}
+#game-desk-sheet-inf{background-image:url('game/story_desk_infernal.png');opacity:0}
+body.theme-infernal #game-desk-sheet{opacity:0}
+body.theme-infernal #game-desk-sheet-inf{opacity:1}
 /* ── 睡梦气泡（书桌精灵头顶·图标+星星） ──── */
 .game-desk-zzz{position:absolute;left:${DESK_SPR_CX-12}px;top:${DESK_SPR_BY-DESK_SPR_FH-30}px;
   z-index:9;pointer-events:none;opacity:0;transition:opacity .5s ease;
   width:74px;height:64px}
 .game-desk-zzz.show{opacity:1}
-.sleep-bubble-img{width:100%;height:100%;image-rendering:pixelated;display:block}
+.sleep-bubble-img{position:absolute;left:0;top:0;width:100%;height:100%;image-rendering:pixelated;display:block;transition:opacity .6s ease}
+.sbi-infernal{opacity:0}
+body.theme-infernal .sbi-internal{opacity:0}
+body.theme-infernal .sbi-infernal{opacity:1}
 .sleep-star{position:absolute;font-size:8px;color:#f5d97a;opacity:0;
   text-shadow:0 0 3px rgba(245,217,122,.6);pointer-events:none}
 .game-desk-zzz.show .sleep-star{animation:sleepSparkle 2.8s ease-in-out infinite}
@@ -4908,12 +4936,13 @@ function hideDeskSprite(){
 }
 function startDeskSprFrames(){
   if(G._deskSprTimer)clearInterval(G._deskSprTimer);
-  const sheet=G.viewport&&G.viewport.querySelector('#game-desk-sheet');
-  if(!sheet)return;
+  const sheets=G.viewport&&G.viewport.querySelectorAll('#game-desk-sheet,#game-desk-sheet-inf');
+  if(!sheets||!sheets.length)return;
   let row=0;
   G._deskSprTimer=setInterval(()=>{
     row=row===0?1:0;
-    sheet.style.backgroundPosition='0 '+(row*100)+'%';
+    const pos='0 '+(row*100)+'%';
+    sheets.forEach(s=>{s.style.backgroundPosition=pos;});
   },650);
 }
 function stopDeskSprFrames(){
