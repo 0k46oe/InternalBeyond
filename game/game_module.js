@@ -93,6 +93,14 @@ const RANKS = [
   {en:'Ten',cn:'十',num:'10'},{en:'Page',cn:'侍从',num:'P'},{en:'Knight',cn:'骑士',num:'Kn'},
   {en:'Queen',cn:'王后',num:'Q'},{en:'King',cn:'国王',num:'K'}
 ];
+
+/* ── 流式传输辅助：游戏模块统一入口 ── */
+function _isStreamEnabled(cfg){
+  if(!cfg)return false;
+  const streamCfg=cfg.streaming!==undefined?!!cfg.streaming:true;
+  return streamCfg&&typeof callApiChatStream==='function';
+}
+
 function buildTarotDeck(){
   const deck=[];
   MAJOR_ARCANA.forEach(([num,cn,en])=>deck.push({type:'major',num,cn,en,display:num+' - '+cn+' '+en,color:'#2a1540'}));
@@ -1989,7 +1997,7 @@ async function runTarotInterpret(panel,cfg){
 
   try{
     const aiName=cfg.nickname||cfg.model||'AI';
-    const reply=await callApiChat(cfg,[{role:'system',content:tarotSys},{role:'user',content:userPrompt}]);
+    const reply=_isStreamEnabled(cfg)?await callApiChatStream(cfg,[{role:'system',content:tarotSys},{role:'user',content:userPrompt}]):await callApiChat(cfg,[{role:'system',content:tarotSys},{role:'user',content:userPrompt}]);
     t.readingText=reply||'';
     if(!t.readingText){t.readingText='AI沉默了…请尝试重新解读。'}
     t._aiName=aiName;
@@ -2069,7 +2077,7 @@ async function handleTarotFollowup(panel,type){
   readPanel.scrollTop=readPanel.scrollHeight;
 
   try{
-    const reply=await callApiChat(t.cfg,t._history);
+    const reply=_isStreamEnabled(t.cfg)?await callApiChatStream(t.cfg,t._history):await callApiChat(t.cfg,t._history);
     t._history.push({role:'assistant',content:reply||''});
     t.readingText+='\n\n'+reply;
     t.sessionLog.push({type:'followup-a',text:reply||'',time:Date.now()});
@@ -2434,7 +2442,7 @@ async function aiGameSend(){
   showDialogue('Sui',[FIXED_LINES.thinking],null);
 
   try{
-    const reply = await callApiChat(G._aiCfg, messages);
+    const reply = _isStreamEnabled(G._aiCfg) ? await callApiChatStream(G._aiCfg, messages) : await callApiChat(G._aiCfg, messages);
     G._aiSending=false;
     if(!G.aiGameActive||session!==G._aiSession)return;/* 玩家已退出，丢弃迟到响应 */
     if(!reply||!String(reply).trim()){aiGameError('连接失败，请检查API配置和网络连接。');return}
@@ -4843,17 +4851,25 @@ function teaChatAiOpen(aiName){
   addTeaMsg('system',null,'请注意：对话中显示的时间为浏览器本地时间。\nTA无法知晓真实世界的时间。');
 
   /* AI first message */
-  addTeaMsg('typing',aiName,'……');
-  teaChatApiCall('茶已经准备好了。请根据氛围自然地开始对话。用一句简短的开场白迎接对方。不要说"你好"这样生硬的话。').then(reply=>{
-    removeTeaTyping();
-    if(reply){
-      G.teaHistory.push({role:'assistant',content:reply});
-      addTeaMsg('ai',aiName,reply);
-    }
-  }).catch(err=>{
-    removeTeaTyping();
-    addTeaMsg('system',null,'抱歉，连接遇到了问题。请检查API密钥是否正确配置：'+(err.message||'请检查API配置'));
-  });
+  if(_isStreamEnabled(G._teaCfg)){
+    addTeaMsg('ai',aiName,'');
+    const _oEl=G.viewport?.querySelector('#tea-chat-messages')?.lastElementChild;
+    const _oTxt=_oEl?.querySelector('.game-tea-msg-text');
+    teaChatApiCall('茶已经准备好了。请根据氛围自然地开始对话。用一句简短的开场白迎接对方。不要说“你好”这样生硬的话。',{onChunk:function(ch){if(_oTxt)_oTxt.textContent+=ch;const _m=G.viewport?.querySelector('#tea-chat-messages');if(_m)_m.scrollTop=_m.scrollHeight}}).then(reply=>{
+      if(reply){G.teaHistory.push({role:'assistant',content:reply});if(_oTxt)_oTxt.textContent=reply}
+    }).catch(err=>{
+      addTeaMsg('system',null,'抱歉，连接遇到了问题。请检查API密钥是否正确配置：'+(err.message||'请检查API配置'));
+    });
+  }else{
+    addTeaMsg('typing',aiName,'……');
+    teaChatApiCall('茶已经准备好了。请根据氛围自然地开始对话。用一句简短的开场白迎接对方。不要说“你好”这样生硬的话。').then(reply=>{
+      removeTeaTyping();
+      if(reply){G.teaHistory.push({role:'assistant',content:reply});addTeaMsg('ai',aiName,reply)}
+    }).catch(err=>{
+      removeTeaTyping();
+      addTeaMsg('system',null,'抱歉，连接遇到了问题。请检查API密钥是否正确配置：'+(err.message||'请检查API配置'));
+    });
+  }
 }
 
 function teaChatSend(){
@@ -4882,7 +4898,6 @@ function teaChatSend(){
 
   /* AI response */
   const aiName=G._teaCfg?.nickname||'AI';
-  addTeaMsg('typing',aiName,'……');
 
   /* Check if AI should initiate ending */
   let extraInstruction='';
@@ -4890,16 +4905,28 @@ function teaChatSend(){
     extraInstruction='\n[这是第'+G.teaRound+'轮对话。请自然地提出结束茶歇。]';
   }
 
-  teaChatApiCall(extraInstruction).then(reply=>{
-    removeTeaTyping();
-    if(reply){
-      G.teaHistory.push({role:'assistant',content:reply});
-      addTeaMsg('ai',aiName,reply);
-    }
-  }).catch(err=>{
-    removeTeaTyping();
-    addTeaMsg('system',null,'消息未能送达，请确认网络和API配置：'+(err.message||''));
-  });
+  if(_isStreamEnabled(G._teaCfg)){
+    addTeaMsg('ai',aiName,'');
+    const _lastEl=G.viewport?.querySelector('#tea-chat-messages')?.lastElementChild;
+    const _txtEl=_lastEl?.querySelector('.game-tea-msg-text');
+    teaChatApiCall(extraInstruction,{onChunk:function(ch){
+      if(_txtEl)_txtEl.textContent+=ch;
+      const _m=G.viewport?.querySelector('#tea-chat-messages');if(_m)_m.scrollTop=_m.scrollHeight;
+    }}).then(reply=>{
+      if(reply){G.teaHistory.push({role:'assistant',content:reply});if(_txtEl)_txtEl.textContent=reply}
+    }).catch(err=>{
+      addTeaMsg('system',null,'消息未能送达：'+(err.message||''));
+    });
+  }else{
+    addTeaMsg('typing',aiName,'……');
+    teaChatApiCall(extraInstruction).then(reply=>{
+      removeTeaTyping();
+      if(reply){G.teaHistory.push({role:'assistant',content:reply});addTeaMsg('ai',aiName,reply)}
+    }).catch(err=>{
+      removeTeaTyping();
+      addTeaMsg('system',null,'消息未能送达：'+(err.message||''));
+    });
+  }
 }
 
 function teaChatBye(){
@@ -4920,7 +4947,7 @@ function teaChatBye(){
   });
 }
 
-async function teaChatApiCall(extraInstruction){
+async function teaChatApiCall(extraInstruction,opts){
   if(!G._teaCfg||typeof callApiChat==='undefined') throw new Error('No API');
   const messages=[{role:'system',content:G._teaSysPrompt},...G.teaHistory.map(m=>({role:m.role,content:m.content}))];
   if(extraInstruction){
@@ -4930,6 +4957,9 @@ async function teaChatApiCall(extraInstruction){
     }else{
       messages.push({role:'user',content:extraInstruction});
     }
+  }
+  if(_isStreamEnabled(G._teaCfg)&&opts&&opts.onChunk){
+    return await callApiChatStream(G._teaCfg,messages,{onChunk:opts.onChunk});
   }
   return await callApiChat(G._teaCfg, messages);
 }
