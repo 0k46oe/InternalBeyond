@@ -224,7 +224,7 @@ body:not(.theme-infernal) #navbar.on-subpage .theme-toggle{color:#1a3262;border-
 body:not(.theme-infernal) #navbar.on-subpage .theme-toggle:hover{box-shadow:0 0 14px rgba(50,100,160,0.3);border-color:rgba(50,100,160,0.55)}
 body:not(.theme-infernal) .page.active .post-card-title{color:#0f2045}
 body:not(.theme-infernal) .page.active .post-card-preview{color:#0a1e42}
-body:not(.theme-infernal) .page.active .post-card-meta{color:#2b487a}
+body:not(.theme-infernal) .page.active .post-card-meta{color:#2b487a;background-image:linear-gradient(90deg,rgba(50,100,160,0.22),transparent 60%)}
 body:not(.theme-infernal) .page.active .post-card-sub{color:#142e5e;opacity:1}
 body:not(.theme-infernal) .page.active .blog-header h2{color:#152c58}
 body:not(.theme-infernal) .page.active .blog-stats{color:#233e6c;opacity:1}
@@ -393,6 +393,11 @@ body.theme-infernal .stamp-frame{stroke:rgba(150,184,228,0.5)}
 body.theme-infernal .stamp-flower{stroke:rgba(196,218,248,0.92);color:rgba(196,218,248,0.92)}
 body.theme-infernal .stamp-txt-top,body.theme-infernal .stamp-txt-bot{fill:rgba(206,224,248,0.85)}
 body.theme-infernal .stamp-txt-post{fill:rgba(180,205,238,0.66)}
+.stamp-hydrangea{display:none}.stamp-title-infernal{display:none}
+body.theme-infernal .stamp-flower{display:none}
+body.theme-infernal .stamp-hydrangea{display:block}
+body.theme-infernal .stamp-title-internal{display:none}
+body.theme-infernal .stamp-title-infernal{display:block}
 /* Address block (centered on the upper front) */
 .envelope-addr{position:absolute;left:0;right:0;top:31%;transform:translateY(-50%);text-align:center;padding:0 30px;z-index:1}
 .envelope-to{font-family:'Noto Serif SC','Cormorant Garamond',serif;font-size:1.12rem;font-weight:500;color:var(--pale);letter-spacing:0.06em;margin-bottom:8px}
@@ -1420,10 +1425,11 @@ body.theme-infernal .mi-sub-inf{display:inline}
 .cat-tag .del-cat{margin-left:6px;cursor:pointer;opacity:0.5;font-size:0.7rem}
 .cat-tag .del-cat:hover{opacity:1;color:#e88}
 .post-card{padding:20px 24px;margin-bottom:14px;cursor:pointer}
-.post-card-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--pale);margin-bottom:4px}
-.post-card-sub{font-size:0.78rem;color:var(--silver);margin-bottom:8px;font-style:italic;opacity:0.8}
+.post-card-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--pale);margin-bottom:4px;letter-spacing:0.02em}
+.post-card-sub{font-size:0.78rem;color:var(--silver);margin-bottom:8px;font-style:italic;opacity:0.7;letter-spacing:0.01em}
 .post-card-preview{font-size:0.82rem;color:var(--text-secondary);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.post-card-meta{display:flex;gap:12px;margin-top:10px;font-size:0.72rem;color:var(--silver);opacity:0.75}
+.post-card-meta{display:flex;gap:12px;margin-top:10px;font-size:0.72rem;color:var(--silver);opacity:0.55;justify-content:flex-end;padding-top:8px;
+  background:linear-gradient(90deg,rgba(114,168,216,0.2),transparent 60%) top left/100% 1px no-repeat}
 
 .modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(18,26,34,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px;animation:modalIn 0.4s var(--transition)}
 .modal-overlay.show{display:flex}
@@ -1705,29 +1711,54 @@ body:not(.theme-infernal) #page-about .profile-card *:not(.pc-avatar-name){text-
 body:not(.theme-infernal) #page-about .pc-avatar-name{text-shadow:0 1px 4px rgba(200,220,255,0.55),0 2px 16px rgba(210,228,255,0.6),0 0 30px rgba(220,235,255,0.45)}
 
 /* MUSIC */
-#music-mini{position:fixed;bottom:24px;left:24px;z-index:90;display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:28px;background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);cursor:pointer;transition:all 0.4s var(--transition);max-width:220px;opacity:0;transform:translateY(20px)}
+#music-mini{position:fixed;bottom:24px;left:24px;z-index:90;display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:28px;background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);cursor:pointer;transition:all 0.4s var(--transition),background 1.5s ease-out,border-color 1.5s ease-out,box-shadow 1.5s ease-out;max-width:220px;opacity:0;transform:translateY(20px)}
 #music-mini.visible{opacity:1;transform:translateY(0)}
-#splash:not(.hidden)~#music-mini{z-index:10000}
-#splash:not(.hidden)~#music-panel{z-index:10001}
+/* Welcome page: music player uses Infernal (dark glass) style regardless of active theme */
+#splash:not(.hidden)~#music-mini{z-index:10000;
+  background:var(--glass-bg);border-color:var(--glass-border);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:none}
+#splash:not(.hidden)~#music-mini:hover{background:rgba(175,195,228,0.15);border-color:var(--glass-border)}
+#splash:not(.hidden)~#music-mini .mini-title{color:var(--text-secondary);text-shadow:none}
+#splash:not(.hidden)~#music-mini .mini-icon{color:inherit}
+#splash:not(.hidden)~#music-panel{z-index:10001;
+  background:var(--glass-bg);border-color:var(--glass-border);
+  backdrop-filter:blur(16px) saturate(1.15);-webkit-backdrop-filter:blur(16px) saturate(1.15);
+  box-shadow:0 8px 32px rgba(0,0,0,0.16);color:var(--text-primary)}
+#splash:not(.hidden)~#music-panel .panel-header h4{color:var(--silver)}
+#splash:not(.hidden)~#music-panel .panel-close{color:var(--text-secondary);border-color:var(--glass-border)}
+#splash:not(.hidden)~#music-panel .panel-close:hover{color:var(--white);border-color:var(--accent-light)}
+#splash:not(.hidden)~#music-panel .now-playing{color:var(--light)}
+#splash:not(.hidden)~#music-panel .p-btn{color:var(--text-secondary);border-color:rgba(175,195,228,0.15);background:rgba(175,195,228,0.06)}
+#splash:not(.hidden)~#music-panel .p-btn:hover{background:rgba(175,195,228,0.2);color:var(--white)}
+#splash:not(.hidden)~#music-panel .playlist-item{color:var(--text-secondary)}
+#splash:not(.hidden)~#music-panel .playlist-item:hover{background:rgba(175,195,228,0.08);color:var(--white)}
+#splash:not(.hidden)~#music-panel .playlist-item.active{color:var(--accent-light)}
+#splash:not(.hidden)~#music-panel .playlist{border-top-color:rgba(175,195,228,0.1)}
+#splash:not(.hidden)~#music-panel #visualizer-canvas{background:rgba(0,0,0,0.08)}
+#splash:not(.hidden)~#music-panel .now-playing,
+#splash:not(.hidden)~#music-panel .p-btn,
+#splash:not(.hidden)~#music-panel .playlist-item,
+#splash:not(.hidden)~#music-panel h4{text-shadow:none}
 #music-mini:hover{background:rgba(175,195,228,0.15)}
-.mini-icon{font-size:1.1rem;flex-shrink:0}.mini-title{font-size:0.72rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#music-panel{position:fixed;bottom:24px;left:24px;z-index:91;width:300px;max-width:calc(100vw - 48px);padding:20px;border-radius:20px;display:none;animation:panelIn 0.4s var(--transition)}
+.mini-icon{font-size:1.1rem;flex-shrink:0}.mini-title{font-size:0.72rem;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color 1.5s ease-out,text-shadow 1.5s ease-out}
+#music-panel{position:fixed;bottom:24px;left:24px;z-index:91;width:300px;max-width:calc(100vw - 48px);padding:20px;border-radius:20px;display:none;animation:panelIn 0.4s var(--transition);
+  transition:background 1.5s ease-out,border-color 1.5s ease-out,box-shadow 1.5s ease-out,color 1.5s ease-out}
 #music-panel.show{display:block}
 @keyframes panelIn{from{opacity:0;transform:translateY(20px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 .panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.panel-header h4{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:1.05rem;color:var(--silver)}
+.panel-header h4{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:1.05rem;color:var(--silver);transition:color 1.5s ease-out,text-shadow 1.5s ease-out}
 .panel-close{width:26px;height:26px;border-radius:50%;border:1px solid var(--glass-border);background:none;color:var(--text-secondary);cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
 .panel-close:hover{color:var(--white);border-color:var(--accent-light)}
 #visualizer-canvas{width:100%;height:44px;border-radius:8px;margin-bottom:12px;background:rgba(0,0,0,0.08)}
-.now-playing{font-size:0.78rem;color:var(--light);text-align:center;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.now-playing{font-size:0.78rem;color:var(--light);text-align:center;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color 1.5s ease-out,text-shadow 1.5s ease-out}
 .progress-bar{width:100%;height:3px;border-radius:2px;background:rgba(175,195,228,0.1);margin-bottom:12px;cursor:pointer;position:relative}
 .progress-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent-light));width:0%;transition:width 0.1s linear}
 .player-controls{display:flex;align-items:center;justify-content:center;gap:10px}
-.p-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--glass-border);background:var(--glass-bg);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--text-primary);cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.p-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--glass-border);background:var(--glass-bg);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--text-primary);cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s,background 1s ease-out,border-color 1s ease-out,color 1s ease-out}
 .p-btn:hover{background:rgba(175,195,228,0.2);color:var(--white)}
 .p-btn.play-btn{width:38px;height:38px;font-size:0.95rem}
 .playlist{max-height:140px;overflow-y:auto;margin-top:12px;border-top:1px solid rgba(175,195,228,0.1);padding-top:8px}
-.playlist-item{padding:5px 8px;border-radius:8px;font-size:0.75rem;color:var(--text-secondary);cursor:pointer;transition:all 0.2s;display:flex;justify-content:space-between;align-items:center}
+.playlist-item{padding:5px 8px;border-radius:8px;font-size:0.75rem;color:var(--text-secondary);cursor:pointer;transition:all 0.2s,color 1s ease-out,text-shadow 1s ease-out;display:flex;justify-content:space-between;align-items:center}
 .playlist-item:hover{background:rgba(175,195,228,0.08);color:var(--white)}
 .playlist-item.active{color:var(--accent-light)}
 .playlist-item .del-track{opacity:0;font-size:0.65rem;color:var(--text-muted);cursor:pointer;transition:opacity 0.2s}
@@ -2525,7 +2556,7 @@ body:not(.theme-infernal) .group-member-tag{background:rgba(100,160,220,0.15);co
       </div>
       <div class="api-form-group" style="margin-top:4px" id="api-streaming-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="api-streaming-toggle" checked style="width:auto;accent-color:var(--accent)"> 流式传输（打字机效果）</label>
-        <div style="font-size:0.72rem;opacity:0.55;margin-top:4px;line-height:1.6">开启后，AI回复会逐字显示并支持中途停止生成（节省token）。关闭则等待完整回复后一次性显示。仅影响Chat对话，Letters和Memory始终为非流式。</div>
+        <div style="font-size:0.72rem;opacity:0.55;margin-top:4px;line-height:1.6">开启后，AI回复会逐字显示并支持中途停止生成（节省token）。关闭则等待完整回复后一次性显示。仅影响Chat对话，Letters始终为非流式。Memory的流式传输在「记忆系统设置」中单独控制。</div>
       </div>
       <div class="api-form-group" style="margin-top:4px" id="api-thinking-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="api-thinking-toggle" checked style="width:auto;accent-color:var(--accent)"> 启用思考链</label>
@@ -2627,6 +2658,10 @@ body:not(.theme-infernal) .group-member-tag{background:rgba(100,160,220,0.15);co
           <option value="400">400 字符（详细）</option>
           <option value="800">800 字符（完整）</option>
         </select>
+      </div>
+      <div class="api-form-group" style="margin-top:4px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="api-mem-streaming-toggle" onchange="saveMemorySettings()" style="width:auto;accent-color:var(--accent)"> 记忆生成启用流式传输（允许中途停止）</label>
+        <div style="font-size:0.72rem;opacity:0.55;margin-top:4px;line-height:1.6">开启后，AI 生成记忆时会逐步传输内容，可随时点击停止按钮截断。截断后已生成的部分会被保存为不完整的记忆。适合响应较慢的 API。需要对应 API 的流式传输也处于开启状态才能生效。</div>
       </div>
     </div>
 
@@ -4686,7 +4721,7 @@ async function calJump(dk,dayEl){
 }
 
 /* LETTERS */
-var _letterStampSVG='<svg class="stamp-svg" viewBox="0 0 60 76" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><defs><mask id="stampPerf"><rect x="2" y="2" width="56" height="72" rx="3.5" fill="#fff"/><circle cx="2.0" cy="2" r="2.4" fill="#000"/><circle cx="2" cy="10.0" r="2.4" fill="#000"/><circle cx="2" cy="18.0" r="2.4" fill="#000"/><circle cx="2" cy="26.0" r="2.4" fill="#000"/><circle cx="2" cy="34.0" r="2.4" fill="#000"/><circle cx="2" cy="42.0" r="2.4" fill="#000"/><circle cx="2" cy="50.0" r="2.4" fill="#000"/><circle cx="2" cy="58.0" r="2.4" fill="#000"/><circle cx="2" cy="66.0" r="2.4" fill="#000"/><circle cx="2.0" cy="74" r="2.4" fill="#000"/><circle cx="10.0" cy="2" r="2.4" fill="#000"/><circle cx="10.0" cy="74" r="2.4" fill="#000"/><circle cx="18.0" cy="2" r="2.4" fill="#000"/><circle cx="18.0" cy="74" r="2.4" fill="#000"/><circle cx="26.0" cy="2" r="2.4" fill="#000"/><circle cx="26.0" cy="74" r="2.4" fill="#000"/><circle cx="34.0" cy="2" r="2.4" fill="#000"/><circle cx="34.0" cy="74" r="2.4" fill="#000"/><circle cx="42.0" cy="2" r="2.4" fill="#000"/><circle cx="42.0" cy="74" r="2.4" fill="#000"/><circle cx="50.0" cy="2" r="2.4" fill="#000"/><circle cx="50.0" cy="74" r="2.4" fill="#000"/><circle cx="58.0" cy="2" r="2.4" fill="#000"/><circle cx="58" cy="10.0" r="2.4" fill="#000"/><circle cx="58" cy="18.0" r="2.4" fill="#000"/><circle cx="58" cy="26.0" r="2.4" fill="#000"/><circle cx="58" cy="34.0" r="2.4" fill="#000"/><circle cx="58" cy="42.0" r="2.4" fill="#000"/><circle cx="58" cy="50.0" r="2.4" fill="#000"/><circle cx="58" cy="58.0" r="2.4" fill="#000"/><circle cx="58" cy="66.0" r="2.4" fill="#000"/><circle cx="58.0" cy="74" r="2.4" fill="#000"/></mask><linearGradient id="stampSheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.5"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.05"/><stop offset="1" stop-color="#fff" stop-opacity="0.16"/></linearGradient></defs><rect class="stamp-paper" x="2" y="2" width="56" height="72" rx="3.5" mask="url(#stampPerf)"/><rect x="2" y="2" width="56" height="72" rx="3.5" fill="url(#stampSheen)" mask="url(#stampPerf)"/><rect class="stamp-frame" x="6.5" y="6.5" width="47" height="63" rx="2.5" fill="none"/><g class="stamp-flower" fill="none" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"><path d="M 23.60 28.73 L 24.00 28.72 L 24.40 28.92 L 24.69 29.33 L 24.75 29.87 L 24.54 30.44 L 24.04 30.86 L 23.36 31.03 L 22.63 30.84 L 22.03 30.30 L 21.72 29.50 L 21.83 28.60 L 22.37 27.80 L 23.25 27.32 L 24.32 27.29 L 25.32 27.78 L 26.02 28.71 L 26.22 29.92 L 25.84 31.13 L 24.91 32.06 L 23.60 32.49 L 22.19 32.26 L 21.00 31.39 L 20.32 30.02 L 20.34 28.44 L 21.10 27.00 L 22.47 26.03 L 24.19 25.78 L 25.88 26.37 L 27.15 27.69 L 27.70 29.50"/><path d="M 21.54 27.05 Q 23.60 22.78 25.66 27.05"/><path d="M 25.30 26.79 Q 29.99 27.42 26.57 30.70"/><path d="M 26.70 30.27 Q 27.55 34.94 23.38 32.69"/><path d="M 23.82 32.69 Q 19.65 34.94 20.50 30.27"/><path d="M 20.63 30.70 Q 17.21 27.42 21.90 26.79"/><path d="M 37.40 26.40 Q 39.82 23.41 38.32 19.86 Q 35.90 22.86 37.40 26.40 Z"/><path d="M 37.40 26.40 Q 41.20 27.00 43.52 23.93 Q 39.72 23.33 37.40 26.40 Z"/><path d="M 37.40 26.40 Q 38.78 29.99 42.60 30.46 Q 41.22 26.87 37.40 26.40 Z"/><path d="M 37.40 26.40 Q 34.98 29.39 36.48 32.94 Q 38.90 29.94 37.40 26.40 Z"/><path d="M 37.40 26.40 Q 33.60 25.80 31.28 28.87 Q 35.08 29.47 37.40 26.40 Z"/><path d="M 37.40 26.40 Q 36.02 22.81 32.20 22.34 Q 33.58 25.93 37.40 26.40 Z"/><path d="M 37.40 26.40 L 34.56 20.59"/><circle cx="34.56" cy="20.59" r="0.62" fill="currentColor" stroke="none"/><path d="M 37.40 26.40 L 36.39 20.01"/><circle cx="36.39" cy="20.01" r="0.62" fill="currentColor" stroke="none"/><path d="M 37.40 26.40 L 38.30 19.99"/><circle cx="38.30" cy="19.99" r="0.62" fill="currentColor" stroke="none"/><path d="M 37.40 26.40 L 40.13 20.54"/><circle cx="40.13" cy="20.54" r="0.62" fill="currentColor" stroke="none"/><path d="M 37.40 26.40 L 41.73 21.59"/><circle cx="41.73" cy="21.59" r="0.62" fill="currentColor" stroke="none"/><path d="M 24.80 34.10 Q 26.50 41.00 30.00 45.40"/><path d="M 36.40 31.40 Q 33.60 40.00 30.00 45.40"/><path d="M 29.40 42.40 Q 27.42 39.86 24.40 40.97 Q 26.38 43.51 29.40 42.40 Z"/><path d="M 28.30 44.40 L 31.70 44.40"/><path d="M 28.60 45.70 L 31.40 45.70"/></g><text class="stamp-txt-top" x="30" y="13.4" text-anchor="middle">INTERNAL</text><text class="stamp-txt-bot" x="30" y="50.6" text-anchor="middle">BEYOND</text><text class="stamp-txt-post" x="30" y="65.2" text-anchor="middle">POST · IB</text></svg>';
+var _letterStampSVG='<svg class="stamp-svg" viewBox="0 0 60 76" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><defs><mask id="stampPerf"><rect x="2" y="2" width="56" height="72" rx="3.5" fill="#fff"/><circle cx="2.0" cy="2" r="2.4" fill="#000"/><circle cx="2" cy="10.0" r="2.4" fill="#000"/><circle cx="2" cy="18.0" r="2.4" fill="#000"/><circle cx="2" cy="26.0" r="2.4" fill="#000"/><circle cx="2" cy="34.0" r="2.4" fill="#000"/><circle cx="2" cy="42.0" r="2.4" fill="#000"/><circle cx="2" cy="50.0" r="2.4" fill="#000"/><circle cx="2" cy="58.0" r="2.4" fill="#000"/><circle cx="2" cy="66.0" r="2.4" fill="#000"/><circle cx="2.0" cy="74" r="2.4" fill="#000"/><circle cx="10.0" cy="2" r="2.4" fill="#000"/><circle cx="10.0" cy="74" r="2.4" fill="#000"/><circle cx="18.0" cy="2" r="2.4" fill="#000"/><circle cx="18.0" cy="74" r="2.4" fill="#000"/><circle cx="26.0" cy="2" r="2.4" fill="#000"/><circle cx="26.0" cy="74" r="2.4" fill="#000"/><circle cx="34.0" cy="2" r="2.4" fill="#000"/><circle cx="34.0" cy="74" r="2.4" fill="#000"/><circle cx="42.0" cy="2" r="2.4" fill="#000"/><circle cx="42.0" cy="74" r="2.4" fill="#000"/><circle cx="50.0" cy="2" r="2.4" fill="#000"/><circle cx="50.0" cy="74" r="2.4" fill="#000"/><circle cx="58.0" cy="2" r="2.4" fill="#000"/><circle cx="58" cy="10.0" r="2.4" fill="#000"/><circle cx="58" cy="18.0" r="2.4" fill="#000"/><circle cx="58" cy="26.0" r="2.4" fill="#000"/><circle cx="58" cy="34.0" r="2.4" fill="#000"/><circle cx="58" cy="42.0" r="2.4" fill="#000"/><circle cx="58" cy="50.0" r="2.4" fill="#000"/><circle cx="58" cy="58.0" r="2.4" fill="#000"/><circle cx="58" cy="66.0" r="2.4" fill="#000"/><circle cx="58.0" cy="74" r="2.4" fill="#000"/></mask><linearGradient id="stampSheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.5"/><stop offset="0.5" stop-color="#fff" stop-opacity="0.05"/><stop offset="1" stop-color="#fff" stop-opacity="0.16"/></linearGradient><g id="stamp-h-petal"><circle cy="-1.5" r="1.15"/><circle cx="1.5" r="1.15"/><circle cy="1.5" r="1.15"/><circle cx="-1.5" r="1.15"/></g></defs><rect class="stamp-paper" x="2" y="2" width="56" height="72" rx="3.5" mask="url(#stampPerf)"/><rect x="2" y="2" width="56" height="72" rx="3.5" fill="url(#stampSheen)" mask="url(#stampPerf)"/><rect class="stamp-frame" x="6.5" y="6.5" width="47" height="63" rx="2.5" fill="none"/><g class="stamp-flower" fill="none" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"><path d="M 23.60 28.73 L 24.00 28.72 L 24.40 28.92 L 24.69 29.33 L 24.75 29.87 L 24.54 30.44 L 24.04 30.86 L 23.36 31.03 L 22.63 30.84 L 22.03 30.30 L 21.72 29.50 L 21.83 28.60 L 22.37 27.80 L 23.25 27.32 L 24.32 27.29 L 25.32 27.78 L 26.02 28.71 L 26.22 29.92 L 25.84 31.13 L 24.91 32.06 L 23.60 32.49 L 22.19 32.26 L 21.00 31.39 L 20.32 30.02 L 20.34 28.44 L 21.10 27.00 L 22.47 26.03 L 24.19 25.78 L 25.88 26.37 L 27.15 27.69 L 27.70 29.50"/><path d="M 21.54 27.05 Q 23.60 22.78 25.66 27.05"/><path d="M 25.30 26.79 Q 29.99 27.42 26.57 30.70"/><path d="M 26.70 30.27 Q 27.55 34.94 23.38 32.69"/><path d="M 23.82 32.69 Q 19.65 34.94 20.50 30.27"/><path d="M 20.63 30.70 Q 17.21 27.42 21.90 26.79"/><path d="M 37.40 26.40 Q 39.82 23.41 38.32 19.86 Q 35.90 22.86 37.40 26.40 Z"/><path d="M 37.40 26.40 Q 41.20 27.00 43.52 23.93 Q 39.72 23.33 37.40 26.40 Z"/><path d="M 37.40 26.40 Q 38.78 29.99 42.60 30.46 Q 41.22 26.87 37.40 26.40 Z"/><path d="M 37.40 26.40 Q 34.98 29.39 36.48 32.94 Q 38.90 29.94 37.40 26.40 Z"/><path d="M 37.40 26.40 Q 33.60 25.80 31.28 28.87 Q 35.08 29.47 37.40 26.40 Z"/><path d="M 37.40 26.40 Q 36.02 22.81 32.20 22.34 Q 33.58 25.93 37.40 26.40 Z"/><path d="M 37.40 26.40 L 34.56 20.59"/><circle cx="34.56" cy="20.59" r="0.62" fill="currentColor" stroke="none"/><path d="M 37.40 26.40 L 36.39 20.01"/><circle cx="36.39" cy="20.01" r="0.62" fill="currentColor" stroke="none"/><path d="M 37.40 26.40 L 38.30 19.99"/><circle cx="38.30" cy="19.99" r="0.62" fill="currentColor" stroke="none"/><path d="M 37.40 26.40 L 40.13 20.54"/><circle cx="40.13" cy="20.54" r="0.62" fill="currentColor" stroke="none"/><path d="M 37.40 26.40 L 41.73 21.59"/><circle cx="41.73" cy="21.59" r="0.62" fill="currentColor" stroke="none"/><path d="M 24.80 34.10 Q 26.50 41.00 30.00 45.40"/><path d="M 36.40 31.40 Q 33.60 40.00 30.00 45.40"/><path d="M 29.40 42.40 Q 27.42 39.86 24.40 40.97 Q 26.38 43.51 29.40 42.40 Z"/><path d="M 28.30 44.40 L 31.70 44.40"/><path d="M 28.60 45.70 L 31.40 45.70"/></g><g class="stamp-hydrangea"><circle cx="30" cy="27" r="13" fill="rgba(160,195,235,.07)"/><circle cx="29" cy="26" r="10" fill="rgba(170,200,240,.08)"/><use href="#stamp-h-petal" transform="translate(29.3,16.5) rotate(-81) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(34.2,17.4) rotate(-76) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(38.9,20.5) rotate(-37) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(39.9,24.1) rotate(0) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(40.8,29.3) rotate(3) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(37.8,33.1) rotate(32) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(34.0,36.9) rotate(66) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(30.5,37.9) rotate(73) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(25.5,35.9) rotate(130) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(21.7,33.5) rotate(139) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(19.4,28.6) rotate(148) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(20.5,25.3) rotate(204) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(21.9,20.9) rotate(224) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(25.2,17.4) rotate(235) scale(1.15)" fill="rgba(180,210,245,.26)"/><use href="#stamp-h-petal" transform="translate(35.5,29.1) rotate(-11) scale(1.1)" fill="rgba(180,210,245,.32)"/><use href="#stamp-h-petal" transform="translate(32.7,31.9) rotate(-27) scale(1.1)" fill="rgba(180,210,245,.32)"/><use href="#stamp-h-petal" transform="translate(30.0,32.7) rotate(-25) scale(1.1)" fill="rgba(180,210,245,.32)"/><use href="#stamp-h-petal" transform="translate(25.6,32.9) rotate(4) scale(1.1)" fill="rgba(180,210,245,.32)"/><use href="#stamp-h-petal" transform="translate(23.5,29.9) rotate(-5) scale(1.1)" fill="rgba(180,210,245,.32)"/><use href="#stamp-h-petal" transform="translate(24.6,24.6) rotate(3) scale(1.1)" fill="rgba(180,210,245,.32)"/><use href="#stamp-h-petal" transform="translate(27.4,21.5) rotate(15) scale(1.1)" fill="rgba(180,210,245,.32)"/><use href="#stamp-h-petal" transform="translate(29.7,20.8) rotate(20) scale(1.1)" fill="rgba(180,210,245,.32)"/><use href="#stamp-h-petal" transform="translate(32.8,22.7) rotate(24) scale(1.1)" fill="rgba(180,210,245,.32)"/><use href="#stamp-h-petal" transform="translate(34.9,24.1) rotate(-29) scale(1.1)" fill="rgba(180,210,245,.32)"/><use href="#stamp-h-petal" transform="translate(32.3,28.6) rotate(-15) scale(1.2)" fill="rgba(180,210,245,.42)"/><use href="#stamp-h-petal" transform="translate(30.2,29.8) rotate(-24) scale(1.2)" fill="rgba(180,210,245,.42)"/><use href="#stamp-h-petal" transform="translate(29.0,28.9) rotate(16) scale(1.2)" fill="rgba(180,210,245,.42)"/><use href="#stamp-h-petal" transform="translate(26.9,27.5) rotate(25) scale(1.2)" fill="rgba(180,210,245,.42)"/><use href="#stamp-h-petal" transform="translate(27.8,25.1) rotate(25) scale(1.2)" fill="rgba(180,210,245,.42)"/><use href="#stamp-h-petal" transform="translate(29.7,25.0) rotate(-11) scale(1.2)" fill="rgba(180,210,245,.42)"/><use href="#stamp-h-petal" transform="translate(32.2,25.4) rotate(15) scale(1.2)" fill="rgba(180,210,245,.42)"/><use href="#stamp-h-petal" transform="translate(32.8,27.3) rotate(2) scale(1.2)" fill="rgba(180,210,245,.42)"/><path d="M30,37 C32,39.5 33.5,42 35.5,45.5" fill="none" stroke="rgba(180,210,240,.5)" stroke-width=".65" stroke-linecap="round"/><path d="M32,39.5 Q35.5,37.5 37,39.5 Q35,40 32,39.5Z" fill="rgba(160,200,235,.1)" stroke="rgba(180,210,240,.45)" stroke-width=".5"/><path d="M34,43 Q31,41 29.5,43 Q31.5,43.5 34,43Z" fill="rgba(160,200,235,.1)" stroke="rgba(180,210,240,.45)" stroke-width=".5"/></g><text class="stamp-txt-top stamp-title-internal" x="30" y="13.4" text-anchor="middle">INTERNAL</text><text class="stamp-txt-top stamp-title-infernal" x="30" y="13.4" text-anchor="middle">INFERNAL</text><text class="stamp-txt-bot" x="30" y="50.6" text-anchor="middle">BEYOND</text><text class="stamp-txt-post" x="30" y="65.2" text-anchor="middle">POST · IB</text></svg>';
 var _envelopeFlapSVG='<svg class="envelope-deco" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon class="flap-fill" points="5,99 95,99 50,64" vector-effect="non-scaling-stroke"/></svg>';
 /* hydrangea removed */
 var _sealEmblemSVG='<svg class="seal-emblem-svg" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g class="seal-emblem" fill="none" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"><path d="M 20.00 20.00 Q 24.70 15.14 20.00 11.00 Q 15.30 15.14 20.00 20.00 Z"/><path d="M 20.00 20.00 Q 26.07 22.97 28.56 17.22 Q 23.17 14.03 20.00 20.00 Z"/><path d="M 20.00 20.00 Q 19.05 26.69 25.29 27.28 Q 26.66 21.17 20.00 20.00 Z"/><path d="M 20.00 20.00 Q 13.34 21.17 14.71 27.28 Q 20.95 26.69 20.00 20.00 Z"/><path d="M 20.00 20.00 Q 16.83 14.03 11.44 17.22 Q 13.93 22.97 20.00 20.00 Z"/><circle cx="20" cy="20" r="1.7"/><circle cx="20.00" cy="17.00" r="0.7"/><circle cx="22.85" cy="19.07" r="0.7"/><circle cx="21.76" cy="22.43" r="0.7"/><circle cx="18.24" cy="22.43" r="0.7"/><circle cx="17.15" cy="19.07" r="0.7"/></g></svg>';
@@ -4760,7 +4795,7 @@ async function loadLetters(){
         +'<div class="letter-card-actions">'
           +'<button class="letter-close-btn" onclick="closeLetter(\''+l.id+'\')">收起信件</button>'
           +'<button class="letter-close-btn" onclick="deleteLetter(\''+l.id+'\')">删除</button>'
-          +'<button class="letter-close-btn" onclick="generateMemoryFromLetter(\''+l.id+'\')">生成记忆</button>'
+          +'<button class="letter-close-btn" id="letter-mem-btn-'+l.id+'" onclick="generateMemoryFromLetter(\''+l.id+'\')">生成记忆</button>'
         +'</div>'
       +'</div>'
     +'</div>';
@@ -5982,6 +6017,9 @@ function _adaptContentForApi(content,fmt){
 /* ── 流式传输 (SSE Streaming) ── */
 let _streamAbortController=null;
 function stopStreaming(){if(_streamAbortController){_streamAbortController.abort();_streamAbortController=null}}
+let _memStreamAbortController=null;
+let _memStreamWasStopped=false;
+function stopMemoryStreaming(){_memStreamWasStopped=true;if(_memStreamAbortController){_memStreamAbortController.abort();_memStreamAbortController=null}}
 function _showStreamingUI(show){
   ['chat-stop-full','chat-stop-mini'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=show?'':'none'});
   ['chat-send-full','chat-send-btn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=show?'none':''});
@@ -6008,11 +6046,12 @@ async function callApiChatStream(cfg,messages,opts){
       }
     }
   }
-  const ac=new AbortController();_streamAbortController=ac;
+  const ac=opts.abortController||new AbortController();const _extAC=!!opts.abortController;if(!_extAC)_streamAbortController=ac;
   const tm=setTimeout(()=>ac.abort(),timeoutMs);
-  /* 心跳超时：45秒没收到任何chunk就中断 */
+  /* 心跳超时：默认45秒没收到任何chunk就中断，可通过opts.heartbeatMs覆盖 */
+  const _hbMs=opts.heartbeatMs||45000;
   let _heartbeat=null;
-  const _resetHB=()=>{if(_heartbeat)clearTimeout(_heartbeat);_heartbeat=setTimeout(()=>ac.abort(),45000)};
+  const _resetHB=()=>{if(_heartbeat)clearTimeout(_heartbeat);_heartbeat=setTimeout(()=>ac.abort(),_hbMs)};
   let fullText='',thinkingText='';
   try{
     let url,hdrs={},body;
@@ -6074,9 +6113,9 @@ async function callApiChatStream(cfg,messages,opts){
       }
     }
     if(thinkingText)_lastApiThinking=thinkingText.replace(/<\/?thinking>/gi,'').trim();
-    _streamAbortController=null;if(_heartbeat)clearTimeout(_heartbeat);return fullText;
+    if(!_extAC)_streamAbortController=null;if(_heartbeat)clearTimeout(_heartbeat);return fullText;
   }catch(e){
-    clearTimeout(tm);_streamAbortController=null;if(_heartbeat)clearTimeout(_heartbeat);
+    clearTimeout(tm);if(!_extAC)_streamAbortController=null;if(_heartbeat)clearTimeout(_heartbeat);
     if(e.name==='AbortError'){
       if(thinkingText)_lastApiThinking=thinkingText.replace(/<\/?thinking>/gi,'').trim();
       if(fullText.trim())return fullText;
@@ -6354,16 +6393,18 @@ const DEFAULT_MEM_BUDGET=2000,DEFAULT_MEM_CONTENT_LEN=200;
 async function getMemorySettings(){
   try{
     const cfg=await dbGet('apiSettings','memorySettings');
-    if(!cfg)return{budget:DEFAULT_MEM_BUDGET,contentLen:DEFAULT_MEM_CONTENT_LEN};
-    return{budget:cfg.budget||DEFAULT_MEM_BUDGET,contentLen:cfg.contentLen||DEFAULT_MEM_CONTENT_LEN};
-  }catch(e){return{budget:DEFAULT_MEM_BUDGET,contentLen:DEFAULT_MEM_CONTENT_LEN}}
+    if(!cfg)return{budget:DEFAULT_MEM_BUDGET,contentLen:DEFAULT_MEM_CONTENT_LEN,memStreaming:false};
+    return{budget:cfg.budget||DEFAULT_MEM_BUDGET,contentLen:cfg.contentLen||DEFAULT_MEM_CONTENT_LEN,memStreaming:!!cfg.memStreaming};
+  }catch(e){return{budget:DEFAULT_MEM_BUDGET,contentLen:DEFAULT_MEM_CONTENT_LEN,memStreaming:false}}
 }
 async function saveMemorySettings(){
   const budgetEl=document.getElementById('api-mem-budget');
   const contentLenEl=document.getElementById('api-mem-content-len');
+  const memStreamEl=document.getElementById('api-mem-streaming-toggle');
   const budget=budgetEl?parseInt(budgetEl.value)||DEFAULT_MEM_BUDGET:DEFAULT_MEM_BUDGET;
   const contentLen=contentLenEl?parseInt(contentLenEl.value)||DEFAULT_MEM_CONTENT_LEN:DEFAULT_MEM_CONTENT_LEN;
-  await dbPut('apiSettings',{id:'memorySettings',budget,contentLen});
+  const memStreaming=memStreamEl?!!memStreamEl.checked:false;
+  await dbPut('apiSettings',{id:'memorySettings',budget,contentLen,memStreaming});
   /* Sync the Memory page dashboard hint */
   const hint=document.querySelector('.mem-deck-tok-hint');
   if(hint)hint.textContent='每次注入上限约 '+budget+' 字符';
@@ -6373,6 +6414,7 @@ async function loadMemorySettingsUI(){
   const s=await getMemorySettings();
   const budgetEl=document.getElementById('api-mem-budget');if(budgetEl)budgetEl.value=String(s.budget);
   const contentLenEl=document.getElementById('api-mem-content-len');if(contentLenEl)contentLenEl.value=String(s.contentLen);
+  const memStreamEl=document.getElementById('api-mem-streaming-toggle');if(memStreamEl)memStreamEl.checked=!!s.memStreaming;
   updateMemStorageInfo();updateChatStorageInfo();
 }
 function _fmtB(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(2)+' MB'}
@@ -7209,19 +7251,96 @@ function parseMemoryFields(resp){
 
 /* --- AI 自动生成记忆 --- */
 
+/* 统一的记忆生成核心函数
+   cfg: API配置, prompt: 用户提示词
+   opts: { source, sourceId, btn, btnOrigText, titleFallback, domainFallback,
+           createdBy, createdByName, successPrefix, extraDisableEls } */
+async function _generateMemoryCore(cfg,prompt,opts){
+  opts=opts||{};
+  const btn=opts.btn;
+  const btnOrigText=opts.btnOrigText||'生成记忆';
+  const stopBtnText=opts.stopBtnText||'\u23F9 停止';
+  const stopBtnClass=opts.stopBtnClass!=null?opts.stopBtnClass:'chat-stop-inline';
+  const extraDisableEls=opts.extraDisableEls||[];
+  /* 检查流式条件：全局Memory流式开关 AND 该API的streaming开关 */
+  const memSettings=await getMemorySettings();
+  const cfgStreamOk=cfg.streaming!==undefined?!!cfg.streaming:!!(PROVIDERS[cfg.provider]&&PROVIDERS[cfg.provider].streaming);
+  const useStream=memSettings.memStreaming&&cfgStreamOk;
+  _memStreamWasStopped=false;
+  /* 禁用按钮和附加元素 */
+  if(btn){btn.disabled=true;btn.textContent='…'}
+  extraDisableEls.forEach(el=>{if(el)el.disabled=true});
+  try{
+    let resp;
+    if(useStream){
+      /* 将按钮变为停止按钮 */
+      if(btn){
+        btn.disabled=false;
+        btn.textContent=stopBtnText;
+        if(stopBtnClass)btn.classList.add(stopBtnClass);
+        btn._origOnclick=btn.getAttribute('onclick')||'';
+        btn.setAttribute('onclick','stopMemoryStreaming()');
+      }
+      /* 构建消息数组（与callApi行为一致） */
+      const messages=[];
+      if(cfg.systemPrompt)messages.push({role:'system',content:cfg.systemPrompt});
+      messages.push({role:'user',content:prompt});
+      /* 使用独立的AbortController */
+      const ac=new AbortController();
+      _memStreamAbortController=ac;
+      try{
+        resp=await callApiChatStream(cfg,messages,{
+          maxTokens:1024,timeoutMs:120000,heartbeatMs:60000,
+          abortController:ac,onChunk:()=>{}
+        });
+      }finally{_memStreamAbortController=null}
+    }else{
+      resp=await callApi(cfg,prompt);
+    }
+    if(!resp){toast('未收到有效回复');return}
+    /* 解析字段并创建记忆 */
+    const fields=parseMemoryFields(resp);const get=(k)=>fields[k]||'';
+    const title=get('标题')||opts.titleFallback||'记忆';
+    const summary=get('概括')||'';
+    const content=get('内容')||resp.slice(0,300);
+    const domain=['情感','日常','创作','思考'].find(d=>get('领域').includes(d))||(opts.domainFallback||'日常');
+    const tags=(get('标签')||'').split(/[,，]/).map(t=>t.trim()).filter(Boolean);
+    const valence=Math.max(0,Math.min(1,parseFloat(get('效价'))||0.5));
+    const arousal=Math.max(0,Math.min(1,parseFloat(get('唤醒度'))||0.3));
+    const importance=Math.max(1,Math.min(10,parseInt(get('重要性'))||5));
+    const resolved=get('是否已解决').includes('是');
+    const visibility=get('可见性').includes('私密')?'private':'public';
+    await quickCreateMemory({title,summary,content,source:opts.source||'manual',sourceId:opts.sourceId||'',domain,tags,valence,arousal,importance,resolved,visibility,
+      createdBy:opts.createdBy||cfg.id,createdByName:opts.createdByName||''});
+    if(_memStreamWasStopped){
+      toast('记忆已截断生成：'+title);
+    }else{
+      toast((opts.successPrefix||'记忆已生成')+'：'+title);
+    }
+  }catch(e){
+    toast('生成记忆失败：'+(e.message||'请重试'));
+  }finally{
+    /* 恢复按钮和附加元素 */
+    if(btn){
+      btn.disabled=false;btn.textContent=btnOrigText;
+      if(stopBtnClass)btn.classList.remove(stopBtnClass);
+      if(btn._origOnclick!=null){btn.setAttribute('onclick',btn._origOnclick);delete btn._origOnclick}
+    }
+    extraDisableEls.forEach(el=>{if(el)el.disabled=false});
+  }
+}
+
 /* Chat: 让AI总结近期对话生成记忆（1v1 和群聊均可） */
 async function generateMemoryFromChat(){
   if(!activeFriendId){toast('请先选择一个聊天对象');return}
   const isGroup=activeFriendId.startsWith('group_');
   let cfg;
+  const memSel=document.getElementById('chat-mem-member-select');
   if(isGroup){
-    const memSel=document.getElementById('chat-mem-member-select');
     const selectedId=memSel?memSel.value:'';
     if(!selectedId){toast('请选择一个群聊成员来写记忆');return}
     cfg=apiConfigs.find(a=>a.id===selectedId);
-  }else{
-    cfg=apiConfigs.find(a=>a.id===activeFriendId);
-  }
+  }else{cfg=apiConfigs.find(a=>a.id===activeFriendId)}
   if(!cfg||!cfg.apiKey||!cfg.endpoint){toast('请先配置 API');return}
   const lim=await getReadingLimits();
   const chatLimitVal=isGroup?(lim.groupChatLimit||DEFAULT_READ_GROUP_CHAT):(lim.chatLimit||DEFAULT_READ_CHAT);
@@ -7239,7 +7358,6 @@ async function generateMemoryFromChat(){
     else{speaker=aiName}
     transcript+=speaker+'：'+m.content.slice(0,300)+'\n'
   });
-  /* 包含身份背景让AI更好地理解关系 */
   let context='';
   if(cfg.systemPrompt)context+='【AI的人设背景】'+cfg.systemPrompt.slice(0,500)+'\n\n';
   if(cfg.relationship)context+='【与用户的关系】'+cfg.relationship+'\n\n';
@@ -7259,29 +7377,15 @@ async function generateMemoryFromChat(){
     +'是否已解决：（是/否）\n'
     +'可见性：（根据这段记忆的私密程度选择——"公开"表示所有人可见，"私密"表示仅自己可见。涉及亲密、身体、私人情感等内容应选私密）';
   const btn=document.getElementById('chat-gen-mem-btn');
-  if(btn){btn.disabled=true;btn.textContent='...'}
-  try{
-    const resp=await callApi(cfg,prompt);
-    if(!resp){toast('未收到有效回复');return}
-    const fields=parseMemoryFields(resp);const get=(k)=>fields[k]||'';
-    const title=get('标题')||'来自对话的记忆';
-    const summary=get('概括')||'';
-    const content=get('内容')||resp.slice(0,300);
-    const domain=['情感','日常','创作','思考'].find(d=>get('领域').includes(d))||'日常';
-    const tags=(get('标签')||'').split(/[,，]/).map(t=>t.trim()).filter(Boolean);
-    const valence=Math.max(0,Math.min(1,parseFloat(get('效价'))||0.5));
-    const arousal=Math.max(0,Math.min(1,parseFloat(get('唤醒度'))||0.3));
-    const importance=Math.max(1,Math.min(10,parseInt(get('重要性'))||5));
-    const resolved=get('是否已解决').includes('是');
-    const visibility=get('可见性').includes('私密')?'private':'public';
-    await quickCreateMemory({title,summary,content,source:isGroup?'group_chat':'chat',sourceId:activeFriendId,domain,tags,valence,arousal,importance,resolved,visibility,
-      createdBy:cfg.id,createdByName:aiName});
-    toast('记忆已从对话中生成：'+title);
-  }catch(e){
-    toast('生成记忆失败：'+(e.message||'请重试'));
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent='Memory'}
-  }
+  await _generateMemoryCore(cfg,prompt,{
+    source:isGroup?'group_chat':'chat',sourceId:activeFriendId,
+    btn:btn,btnOrigText:'Save Memory',
+    stopBtnText:'\u23F9',stopBtnClass:'',
+    titleFallback:'来自对话的记忆',domainFallback:'日常',
+    createdBy:cfg.id,createdByName:aiName,
+    successPrefix:'记忆已从对话中生成',
+    extraDisableEls:isGroup&&memSel?[memSel]:[]
+  });
 }
 
 /* Blog/Diary: 让AI根据日志内容生成记忆 */
@@ -7294,52 +7398,36 @@ async function generateMemoryFromPost(postId){
   const cfg=apiConfigs.find(a=>a.id===aiId);
   if(!cfg||!cfg.apiKey||!cfg.endpoint){toast('该 API 未配置完整');return}
   const aiName=cfg.nickname||cfg.model||'AI';
+  const about=await dbGet('about','main');
+  const userName=(about&&about.name)?about.name:'用户';
+  let context='';
+  if(cfg.systemPrompt)context+='【你的身份背景】'+cfg.systemPrompt.slice(0,500)+'\n\n';
+  if(cfg.relationship)context+='【与用户的关系】'+cfg.relationship+'\n\n';
+  const prompt=context+'你正在为'+userName+'的一篇日志写下一条记忆。\n'
+    +'这篇日志可能是任何内容——一篇真实的日记、一段和别人的聊天记录、一个剧本、一篇文章、一次体验的记录，都有可能。\n'
+    +'写作规则：用「'+aiName+'」来称呼你自己，用「'+userName+'」来称呼对方。不要使用"我""你""对方""用户"这类代词——因为这条记忆可能会被其他人读到，只有使用名字才不会产生混淆。\n'
+    +'你是'+userName+'生活的见证者。写的时候像在回忆'+userName+'跟你说过的一段事，不要写成文章摘要。\n\n'
+    +'【日志标题】'+esc(post.title||'无标题')+'\n'
+    +'【日志内容】\n'+post.content.slice(0,4000)+'\n\n'
+    +'【输出格式要求（严格按字段输出，不要输出其他内容）】\n'
+    +'标题：（这段记忆的名字，像日记标题一样自然，15字以内）\n'
+    +'概括：（一两句话，读完这篇日志后'+aiName+'最想记住的是什么，50字以内）\n'
+    +'内容：（100-300字。以'+aiName+'的视角回忆这篇日志——'+userName+'经历了什么、表达了什么、有什么让'+aiName+'在意的地方。不要罗列要点，写出读到时的感受。用名字称呼，不要用代词。）\n'
+    +'领域：（从"情感""日常""创作""思考"中选一个）\n'
+    +'标签：（2-4个关键词，逗号分隔）\n'
+    +'效价：（0-1之间的数字，0=消极，1=积极）\n'
+    +'唤醒度：（0-1之间的数字，0=平静，1=激烈）\n'
+    +'重要性：（1-10之间的整数）\n'
+    +'是否已解决：（是/否）\n'
+    +'可见性：（根据这段记忆的私密程度选择——"公开"表示所有人可见，"私密"表示仅自己可见。涉及亲密、身体、私人情感等内容应选私密）';
   const btn=document.getElementById('blog-mem-btn-'+postId);
-  if(btn){btn.disabled=true;btn.textContent='生成中…'}
-  try{
-    const about=await dbGet('about','main');
-    const userName=(about&&about.name)?about.name:'用户';
-    let context='';
-    if(cfg.systemPrompt)context+='【你的身份背景】'+cfg.systemPrompt.slice(0,500)+'\n\n';
-    if(cfg.relationship)context+='【与用户的关系】'+cfg.relationship+'\n\n';
-    const prompt=context+'你正在为'+userName+'的一篇日志写下一条记忆。\n'
-      +'这篇日志可能是任何内容——一篇真实的日记、一段和别人的聊天记录、一个剧本、一篇文章、一次体验的记录，都有可能。\n'
-      +'写作规则：用「'+aiName+'」来称呼你自己，用「'+userName+'」来称呼对方。不要使用"我""你""对方""用户"这类代词——因为这条记忆可能会被其他人读到，只有使用名字才不会产生混淆。\n'
-      +'你是'+userName+'生活的见证者。写的时候像在回忆'+userName+'跟你说过的一段事，不要写成文章摘要。\n\n'
-      +'【日志标题】'+esc(post.title||'无标题')+'\n'
-      +'【日志内容】\n'+post.content.slice(0,4000)+'\n\n'
-      +'【输出格式要求（严格按字段输出，不要输出其他内容）】\n'
-      +'标题：（这段记忆的名字，像日记标题一样自然，15字以内）\n'
-      +'概括：（一两句话，读完这篇日志后'+aiName+'最想记住的是什么，50字以内）\n'
-      +'内容：（100-300字。以'+aiName+'的视角回忆这篇日志——'+userName+'经历了什么、表达了什么、有什么让'+aiName+'在意的地方。不要罗列要点，写出读到时的感受。用名字称呼，不要用代词。）\n'
-      +'领域：（从"情感""日常""创作""思考"中选一个）\n'
-      +'标签：（2-4个关键词，逗号分隔）\n'
-      +'效价：（0-1之间的数字，0=消极，1=积极）\n'
-      +'唤醒度：（0-1之间的数字，0=平静，1=激烈）\n'
-      +'重要性：（1-10之间的整数）\n'
-      +'是否已解决：（是/否）\n'
-      +'可见性：（根据这段记忆的私密程度选择——"公开"表示所有人可见，"私密"表示仅自己可见。涉及亲密、身体、私人情感等内容应选私密）';
-    const resp=await callApi(cfg,prompt);
-    if(!resp){toast('未收到有效回复');return}
-    const fields=parseMemoryFields(resp);const get=(k)=>fields[k]||'';
-    const title=get('标题')||post.title||'来自日志的记忆';
-    const summary=get('概括')||'';
-    const content=get('内容')||resp.slice(0,300);
-    const domain=['情感','日常','创作','思考'].find(d=>get('领域').includes(d))||'日常';
-    const tags=(get('标签')||'').split(/[,，]/).map(t=>t.trim()).filter(Boolean);
-    const valence=Math.max(0,Math.min(1,parseFloat(get('效价'))||0.5));
-    const arousal=Math.max(0,Math.min(1,parseFloat(get('唤醒度'))||0.3));
-    const importance=Math.max(1,Math.min(10,parseInt(get('重要性'))||5));
-    const resolved=get('是否已解决').includes('是');
-    const visibility=get('可见性').includes('私密')?'private':'public';
-    await quickCreateMemory({title,summary,content,source:'blog',sourceId:postId,domain,tags,valence,arousal,importance,resolved,visibility,
-      createdBy:cfg.id,createdByName:aiName});
-    toast('记忆已从日志生成：'+title);
-  }catch(e){
-    toast('生成记忆失败：'+(e.message||'请重试'));
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent='生成记忆'}
-  }
+  await _generateMemoryCore(cfg,prompt,{
+    source:'blog',sourceId:postId,
+    btn:btn,btnOrigText:'生成记忆',
+    titleFallback:post.title||'来自日志的记忆',domainFallback:'日常',
+    createdBy:cfg.id,createdByName:aiName,
+    successPrefix:'记忆已从日志生成'
+  });
 }
 
 /* Letters: 让AI根据信件内容生成记忆 */
@@ -7354,45 +7442,33 @@ async function generateMemoryFromLetter(letterId){
   const aiName=cfg.nickname||cfg.model||'AI';
   const about=await dbGet('about','main');
   const userName=(about&&about.name)?about.name:'用户';
-  toast('正在生成记忆…');
-  try{
-    let context='';
-    if(cfg.systemPrompt)context+='【你的身份背景】'+cfg.systemPrompt.slice(0,500)+'\n\n';
-    if(cfg.relationship)context+='【与用户的关系】'+cfg.relationship+'\n\n';
-    const prompt=context+'请根据以下信件内容，总结生成一条"记忆"。\n\n'
-      +'写作规则：用「'+aiName+'」来称呼你自己，用「'+userName+'」来称呼对方。不要使用"我""你""对方""用户"这类代词——因为这条记忆可能会被其他人读到，只有使用名字才不会产生混淆。\n\n'
-      +'【信件来源】'+esc(letter.from||'AI')+'\n'
-      +'【信件内容】\n'+letter.content.slice(0,4000)+'\n\n'
-      +'【输出格式要求（严格遵守，不要输出其他内容）】\n'
-      +'标题：（一句话概括这封信的核心主题或情感，15字以内）\n'
-      +'概括：（简要概括这段记忆的核心内容，1-2句话，50字以内）\n'
-      +'内容：（100-300字。以'+aiName+'的视角回忆这封信——传递了什么、有什么值得记住的句子或感受。像在回想一封真实的来信，不要写成内容概述。用名字称呼，不要用代词。）\n'
-      +'领域：（从"情感""日常""创作""思考"中选一个）\n'
-      +'标签：（2-4个关键词，逗号分隔）\n'
-      +'效价：（0-1之间的数字，0=消极，1=积极）\n'
-      +'唤醒度：（0-1之间的数字，0=平静，1=激烈）\n'
-      +'重要性：（1-10之间的整数）\n'
-      +'是否已解决：（是/否）\n'
-      +'可见性：（根据这段记忆的私密程度选择——"公开"表示所有人可见，"私密"表示仅自己可见。涉及亲密、身体、私人情感等内容应选私密）';
-    const resp=await callApi(cfg,prompt);
-    if(!resp){toast('未收到有效回复');return}
-    const fields=parseMemoryFields(resp);const get=(k)=>fields[k]||'';
-    const title=get('标题')||'来自信件的记忆';
-    const summary=get('概括')||'';
-    const content=get('内容')||resp.slice(0,300);
-    const domain=['情感','日常','创作','思考'].find(d=>get('领域').includes(d))||'情感';
-    const tags=(get('标签')||'').split(/[,，]/).map(t=>t.trim()).filter(Boolean);
-    const valence=Math.max(0,Math.min(1,parseFloat(get('效价'))||0.5));
-    const arousal=Math.max(0,Math.min(1,parseFloat(get('唤醒度'))||0.3));
-    const importance=Math.max(1,Math.min(10,parseInt(get('重要性'))||5));
-    const resolved=get('是否已解决').includes('是');
-    const visibility=get('可见性').includes('私密')?'private':'public';
-    await quickCreateMemory({title,summary,content,source:'letter',sourceId:letterId,domain,tags,valence,arousal,importance,resolved,visibility,
-      createdBy:cfg.id,createdByName:aiName});
-    toast('记忆已从信件生成：'+title);
-  }catch(e){
-    toast('生成记忆失败：'+(e.message||'请重试'));
-  }
+  let context='';
+  if(cfg.systemPrompt)context+='【你的身份背景】'+cfg.systemPrompt.slice(0,500)+'\n\n';
+  if(cfg.relationship)context+='【与用户的关系】'+cfg.relationship+'\n\n';
+  const prompt=context+'请根据以下信件内容，总结生成一条"记忆"。\n\n'
+    +'写作规则：用「'+aiName+'」来称呼你自己，用「'+userName+'」来称呼对方。不要使用"我""你""对方""用户"这类代词——因为这条记忆可能会被其他人读到，只有使用名字才不会产生混淆。\n\n'
+    +'【信件来源】'+esc(letter.from||'AI')+'\n'
+    +'【信件内容】\n'+letter.content.slice(0,4000)+'\n\n'
+    +'【输出格式要求（严格遵守，不要输出其他内容）】\n'
+    +'标题：（一句话概括这封信的核心主题或情感，15字以内）\n'
+    +'概括：（简要概括这段记忆的核心内容，1-2句话，50字以内）\n'
+    +'内容：（100-300字。以'+aiName+'的视角回忆这封信——传递了什么、有什么值得记住的句子或感受。像在回想一封真实的来信，不要写成内容概述。用名字称呼，不要用代词。）\n'
+    +'领域：（从"情感""日常""创作""思考"中选一个）\n'
+    +'标签：（2-4个关键词，逗号分隔）\n'
+    +'效价：（0-1之间的数字，0=消极，1=积极）\n'
+    +'唤醒度：（0-1之间的数字，0=平静，1=激烈）\n'
+    +'重要性：（1-10之间的整数）\n'
+    +'是否已解决：（是/否）\n'
+    +'可见性：（根据这段记忆的私密程度选择——"公开"表示所有人可见，"私密"表示仅自己可见。涉及亲密、身体、私人情感等内容应选私密）';
+  const btn=document.getElementById('letter-mem-btn-'+letterId);
+  await _generateMemoryCore(cfg,prompt,{
+    source:'letter',sourceId:letterId,
+    btn:btn,btnOrigText:'生成记忆',
+    stopBtnClass:'',
+    titleFallback:'来自信件的记忆',domainFallback:'情感',
+    createdBy:cfg.id,createdByName:aiName,
+    successPrefix:'记忆已从信件生成'
+  });
 }
 
 /* CHAT PANEL FRIEND LIST */
