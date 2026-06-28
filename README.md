@@ -141,7 +141,7 @@ game/
 - **字体**：Cormorant Garamond · Noto Sans SC · Noto Serif SC · Raleway · Great Vibes · Spectral（Google Fonts CDN）。
 - **视觉**：CSS 玻璃拟态、Canvas 雨滴（45 滴）与水波纹、棱镜光影、烛火月光、浮动微尘、交叉溶解过渡。
 - **AI 协议**：Anthropic 原生格式 + OpenAI 兼容格式，覆盖官方及中转站 API。
-- **构建**：Claude (Opus 4.6) 主力 · Opus 4.8 / Sonnet 4.6 / Fable 5 辅助 · GPT-IMAGE-2 贴图 · Adobe Photoshop CS 设计编绘。
+- **构建**：Claude (Opus 4.6) 构建 · Opus 4.8 / Sonnet 4.6 / Fable 5 参与辅助构建 · GPT-IMAGE-2 贴图 · Adobe Photoshop CS 设计编绘。
 
 ---
 
